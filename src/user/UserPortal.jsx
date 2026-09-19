@@ -73,6 +73,12 @@ export default function UserPortal({ slug }) {
     fetchCampaign();
   }, [fetchCampaign]);
 
+  useEffect(() => {
+    if (campaign?.name) {
+      document.title = `YogBoardFrame — ${campaign.name}`;
+    }
+  }, [campaign]);
+
   // Photo selection handler
   const handlePhotoSelected = (file) => {
     if (userPhotoUrl) {
