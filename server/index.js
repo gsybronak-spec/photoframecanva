@@ -31,7 +31,7 @@ app.use('/api/campaigns', publicRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'YogFrame Portal API',
+    service: 'YogBoardFrame Portal API',
     timestamp: new Date().toISOString(),
   });
 });
@@ -47,7 +47,7 @@ app.get('*', (req, res, next) => {
   const indexPath = path.join(distPath, 'index.html');
   res.sendFile(indexPath, (err) => {
     if (err) {
-      res.status(200).send('YogFrame Portal API is running. Build frontend to view admin client.');
+      res.status(200).send('YogBoardFrame Portal API is running. Build frontend to view admin client.');
     }
   });
 });
@@ -55,7 +55,7 @@ app.get('*', (req, res, next) => {
 // Start server
 app.listen(PORT, async () => {
   console.log(`===========================================`);
-  console.log(`🧘 YogFrame Portal Server running on http://localhost:${PORT}`);
+  console.log(`🧘 YogBoardFrame Portal Server running on http://localhost:${PORT}`);
   console.log(`===========================================`);
   await verifyConnection();
 });

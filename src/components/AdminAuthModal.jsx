@@ -37,16 +37,20 @@ export default function AdminAuthModal({ onAuthenticated }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17362f]/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
       <div className="w-full max-w-md rounded-[28px] border border-[#e8dfcf] bg-white p-6 sm:p-8 shadow-2xl">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#eaf2ed] text-[#1f4a3f] shadow-sm">
-          <ShieldCheck className="h-7 w-7 text-[#1f4a3f]" />
+        <div className="mx-auto flex justify-center">
+          <img
+            src="/gujarat-yog-board-logo.png"
+            alt="Gujarat State Yog Board"
+            className="h-16 w-16 object-contain drop-shadow-sm"
+          />
         </div>
 
         <div className="mt-4 text-center">
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#79987e]">
-            RESTRICTED ACCESS
+            GUJARAT STATE YOG BOARD
           </span>
           <h2 className="brand-serif text-2xl font-bold text-[#17362f]">
-            YogFrame Admin Portal
+            YogBoardFrame Admin Portal
           </h2>
           <p className="mt-1 text-xs text-[#52665e]">
             Please enter your administrator passkey to access campaign studio and management controls.

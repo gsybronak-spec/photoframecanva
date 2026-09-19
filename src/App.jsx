@@ -636,7 +636,7 @@ export default function App() {
   if (authChecking) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#faf6ed]">
-        <div className="text-center font-bold text-[#1f4a3f]">Loading YogFrame Admin...</div>
+        <div className="text-center font-bold text-[#1f4a3f]">Loading YogBoardFrame Admin...</div>
       </div>
     );
   }
@@ -649,7 +649,7 @@ export default function App() {
           onAuthenticated={(token) => {
             setAuthToken(token);
             setIsAuthenticated(true);
-            showToast('Welcome to YogFrame Admin Studio');
+            showToast('Welcome to YogBoardFrame Admin Studio');
           }}
         />
       )}

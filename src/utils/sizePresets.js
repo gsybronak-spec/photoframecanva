@@ -1,5 +1,5 @@
 /**
- * Standard Social Media Size Presets for YogFrame Campaigns
+ * Standard Social Media Size Presets for YogBoardFrame Campaigns
  */
 
 export const PRESET_CATEGORIES = ['Instagram', 'Facebook', 'WhatsApp', 'Custom'];

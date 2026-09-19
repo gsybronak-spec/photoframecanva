@@ -57,7 +57,7 @@ export default function UserScreen3Result({
 
       const campSlug = sanitizeFilename(campaign.name || 'Campaign');
       const userSlug = sanitizeFilename(userName || 'Supporter');
-      const filename = `YogFrame-${campSlug}-${userSlug}.png`;
+      const filename = `YogBoardFrame-${campSlug}-${userSlug}.png`;
 
       const link = document.createElement('a');
       link.href = frameUrl;
@@ -85,7 +85,7 @@ export default function UserScreen3Result({
           const blob = await res.blob();
           const campSlug = sanitizeFilename(campaign.name || 'Campaign');
           const userSlug = sanitizeFilename(userName || 'Supporter');
-          const file = new File([blob], `YogFrame-${campSlug}-${userSlug}.png`, { type: 'image/png' });
+          const file = new File([blob], `YogBoardFrame-${campSlug}-${userSlug}.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             filesArray = [file];
           }
@@ -93,15 +93,15 @@ export default function UserScreen3Result({
 
         if (filesArray.length > 0) {
           await navigator.share({
-            title: `${campaign.name} — My YogFrame`,
-            text: `Here is my personalized YogFrame for ${campaign.name}! Create yours at: ${campaignUrl}`,
+            title: `${campaign.name} — My YogBoardFrame`,
+            text: `Here is my personalized YogBoardFrame for ${campaign.name}! Create yours at: ${campaignUrl}`,
             files: filesArray,
           });
           return;
         } else {
           await navigator.share({
-            title: `${campaign.name} — My YogFrame`,
-            text: `Here is my personalized YogFrame for ${campaign.name}! Create yours at: ${campaignUrl}`,
+            title: `${campaign.name} — My YogBoardFrame`,
+            text: `Here is my personalized YogBoardFrame for ${campaign.name}! Create yours at: ${campaignUrl}`,
             url: campaignUrl,
           });
           return;
@@ -119,7 +119,7 @@ export default function UserScreen3Result({
   // 3. WhatsApp Share
   const handleWhatsApp = () => {
     logEvent('whatsapp');
-    const shareText = `Check out my personalized YogFrame for *${campaign.name}*! 🧘\n\nCreate your own customized frame here:\n${campaignUrl}`;
+    const shareText = `Check out my personalized YogBoardFrame for *${campaign.name}*! 🧘\n\nCreate your own customized frame here:\n${campaignUrl}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
     window.open(url, '_blank');
   };
@@ -127,7 +127,7 @@ export default function UserScreen3Result({
   // 4. Facebook Share
   const handleFacebook = () => {
     logEvent('facebook');
-    // Using actual YogFrame campaign URL, NOT canva.com!
+    // Using actual campaign URL, NOT canva.com!
     const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(campaignUrl)}`;
     window.open(url, '_blank', 'width=600,height=500');
   };
@@ -136,7 +136,7 @@ export default function UserScreen3Result({
   const handleInstagram = () => {
     logEvent('instagram');
     handleDownload();
-    alert('Your YogFrame image has been downloaded! Open Instagram to share it to your Story or Feed.');
+    alert('Your YogBoardFrame image has been downloaded! Open Instagram to share it to your Story or Feed.');
   };
 
   // 6. Copy Campaign Link
@@ -149,16 +149,20 @@ export default function UserScreen3Result({
 
   return (
     <div className="w-full max-w-[480px] mx-auto px-4 py-5 sm:py-8">
-      {/* Celebration Header */}
+      {/* Celebration Header with Official Logo */}
       <div className="text-center">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#eaf2ed] text-[#1f4a3f] shadow-sm">
-          <CheckCircle2 className="h-7 w-7 text-[#1f4a3f]" />
+        <div className="mx-auto flex justify-center mb-2">
+          <img
+            src="/gujarat-yog-board-logo.png"
+            alt="Gujarat State Yog Board"
+            className="h-12 w-12 object-contain drop-shadow-sm"
+          />
         </div>
-        <span className="mt-2.5 inline-block text-[10px] font-bold uppercase tracking-widest text-[#79987e]">
+        <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-widest text-[#79987e]">
           SUCCESSFULLY GENERATED
         </span>
         <h2 className="brand-serif text-2xl font-bold text-[#17362f]">
-          Your YogFrame is Ready!
+          Your YogBoardFrame is Ready!
         </h2>
         <p className="mt-1 text-xs text-[#52665e]">
           Download your high-resolution frame or share it with friends and family.
@@ -282,7 +286,7 @@ export default function UserScreen3Result({
         </div>
       </div>
 
-      {/* Make Another YogFrame Button */}
+      {/* Make Another YogBoardFrame Button */}
       <div className="mt-5">
         <button
           type="button"
@@ -290,7 +294,7 @@ export default function UserScreen3Result({
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e8dfcf] bg-white py-3.5 px-4 text-xs sm:text-sm font-bold text-[#17362f] hover:bg-[#f6efe4] transition-colors shadow-sm active:scale-95"
         >
           <RotateCcw className="h-4 w-4 text-[#79987e]" />
-          <span>Make Another YogFrame</span>
+          <span>Make Another YogBoardFrame</span>
         </button>
         <p className="mt-2 text-center text-[10px] text-[#79987e]">
           Create another frame for family or friends under this same campaign.

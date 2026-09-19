@@ -1,6 +1,7 @@
 /**
- * High-Resolution Canvas Compositor for Final YogFrame Generation
- * Combines Layer 1 (Admin Artwork), Layer 2 (User Photo with Mask), Layer 3 (User Name with Typography)
+ * High-Resolution Canvas Compositor for Final YogBoardFrame Generation
+ * Executes 100% locally in the browser memory using HTML5 Canvas 2D API.
+ * ZERO personal photos or generated images are uploaded to any server.
  */
 
 const imagePromiseCache = new Map();

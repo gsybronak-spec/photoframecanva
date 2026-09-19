@@ -1,21 +1,23 @@
 import React from 'react';
-import { Flower2, ShieldCheck, LogOut, Plus } from 'lucide-react';
+import { ShieldCheck, LogOut, Plus } from 'lucide-react';
 
 export default function Header({ onNewCampaign, onLogout, activeCampaignCount = 0 }) {
   return (
     <header className="hero-surface grain text-white border-b border-[#285d4e]/50">
       <div className="max-w-[1140px] mx-auto px-4 py-6 sm:py-8">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-full border border-[#f5d99d]/40 bg-[#f2c35e]/15 text-[#f4c35d] shadow-sm">
-              <Flower2 className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#d6e5dc]">
-                YOGFRAME PORTAL
+          <div className="flex items-center gap-3 min-w-0">
+            <img
+              src="/gujarat-yog-board-logo.png"
+              alt="Gujarat State Yog Board"
+              className="h-11 w-11 sm:h-12 sm:w-12 object-contain rounded-full bg-white/95 p-0.5 shadow-md shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-[#d6e5dc] truncate">
+                GUJARAT STATE YOG BOARD
               </p>
-              <p className="brand-serif text-2xl font-semibold tracking-tight text-[#faf6ed]">
-                YogFrame Admin
+              <p className="brand-serif text-xl sm:text-2xl font-semibold tracking-tight text-[#faf6ed] truncate">
+                YogBoardFrame Admin
               </p>
             </div>
           </div>

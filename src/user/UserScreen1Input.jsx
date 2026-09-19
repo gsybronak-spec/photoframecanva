@@ -46,21 +46,23 @@ export default function UserScreen1Input({
     <div className="w-full max-w-[480px] mx-auto px-4 py-6 sm:py-8">
       {/* Brand Header */}
       <div className="flex items-center justify-between pb-4 border-b border-[#e8dfcf]/80">
-        <div className="flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-full border border-[#f5d99d]/60 bg-[#f2c35e]/20 text-[#db9b35] shadow-sm">
-            <Flower2 className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#79987e]">
-              YOGFRAME PORTAL
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src="/gujarat-yog-board-logo.png"
+            alt="Gujarat State Yog Board"
+            className="h-10 w-10 object-contain drop-shadow-sm shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#79987e] truncate">
+              GUJARAT STATE YOG BOARD
             </p>
-            <p className="brand-serif text-lg font-bold text-[#17362f] tracking-tight">
-              Personalized Yoga Frame
+            <p className="brand-serif text-lg font-bold text-[#17362f] tracking-tight truncate">
+              YogBoardFrame
             </p>
           </div>
         </div>
 
-        <span className="rounded-full border border-[#79987e]/30 bg-[#eaf2ed] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#1f4a3f]">
+        <span className="rounded-full border border-[#79987e]/30 bg-[#eaf2ed] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#1f4a3f] shrink-0">
           Official
         </span>
       </div>

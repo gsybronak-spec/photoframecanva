@@ -81,7 +81,7 @@ async function requireAdminAuth(c, next) {
 app.get('/health', (c) => {
   return c.json({
     status: 'healthy',
-    service: 'YogFrame Portal API (Cloudflare Edge)',
+    service: 'YogBoardFrame Portal API (Cloudflare Edge)',
     timestamp: new Date().toISOString(),
   });
 });

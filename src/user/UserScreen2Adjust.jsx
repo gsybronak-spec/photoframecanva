@@ -586,7 +586,7 @@ export default function UserScreen2Adjust({
           {generating ? (
             <>
               <RefreshCw className="h-5 w-5 animate-spin" />
-              <span>Compositing High-Res YogFrame...</span>
+              <span>Compositing High-Res YogBoardFrame...</span>
             </>
           ) : !artworkLoaded && !artworkError ? (
             <>
@@ -596,7 +596,7 @@ export default function UserScreen2Adjust({
           ) : (
             <>
               <Sparkles className="h-5 w-5" />
-              <span>Generate My YogFrame</span>
+              <span>Generate My YogBoardFrame</span>
             </>
           )}
         </button>

@@ -83,7 +83,7 @@ export default function UserPortal({ slug }) {
     setUserPhotoUrl(objectUrl);
   };
 
-  // Reset user session for "Make Another YogFrame"
+  // Reset user session for "Make Another YogBoardFrame"
   const handleMakeAnother = () => {
     if (userPhotoUrl) {
       URL.revokeObjectURL(userPhotoUrl);
@@ -102,11 +102,15 @@ export default function UserPortal({ slug }) {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf6ed] p-4 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[#eaf2ed] text-[#1f4a3f] shadow-sm">
-          <Flower2 className="h-8 w-8 animate-pulse text-[#1f4a3f]" />
+        <div className="mx-auto flex justify-center">
+          <img
+            src="/gujarat-yog-board-logo.png"
+            alt="Gujarat State Yog Board"
+            className="h-16 w-16 object-contain animate-pulse drop-shadow-sm"
+          />
         </div>
         <p className="brand-serif mt-4 text-lg font-bold text-[#17362f]">
-          Loading YogFrame Campaign...
+          Loading YogBoardFrame Campaign...
         </p>
         <p className="mt-1 text-xs text-[#79987e]">
           Preparing official artwork composition
@@ -199,6 +203,18 @@ export default function UserPortal({ slug }) {
           onMakeAnother={handleMakeAnother}
         />
       )}
+
+      {/* Official Government Wellness Footer */}
+      <footer className="py-6 text-center text-xs text-[#79987e]">
+        <div className="flex items-center justify-center gap-1.5 font-medium">
+          <img
+            src="/gujarat-yog-board-logo.png"
+            alt="Gujarat State Yog Board"
+            className="h-4 w-4 object-contain"
+          />
+          <span>Gujarat State Yog Board • YogBoardFrame</span>
+        </div>
+      </footer>
     </div>
   );
 }
