@@ -1,0 +1,289 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #17362f;
+  --forest: #1f4a3f;
+  --sage: #79987e;
+  --cream: #faf6ed;
+  --sand: #e7d6bb;
+  --saffron: #db9b35;
+  --clay: #be6c45;
+  --line: #e8dfcf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--cream);
+}
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(circle at 100% 2%, rgba(219, 155, 53, 0.17), transparent 19rem),
+              radial-gradient(circle at -8% 41%, rgba(121, 152, 126, 0.14), transparent 22rem),
+              var(--cream);
+}
+
+.brand-serif {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.brand-mono {
+  font-family: "Space Mono", monospace;
+}
+
+.soft-card {
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(31, 74, 63, 0.08);
+  background: #ffffff;
+}
+
+.hero-surface {
+  background: linear-gradient(130deg, #163b32, #285d4e 62%, #417264);
+}
+
+.grain {
+  position: relative;
+  overflow: hidden;
+}
+
+.grain::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.13;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.9) 0.6px, transparent 0.7px);
+  background-size: 6px 6px;
+  mix-blend-mode: soft-light;
+}
+
+.control-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #52665e;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.number-field, .editor-select {
+  width: 100%;
+  margin-top: 5px;
+  border: 1px solid #e5dccd;
+  border-radius: 0.72rem;
+  background: #fdfbf6;
+  padding: 0.62rem 0.7rem;
+  color: var(--ink);
+  font-size: 0.82rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.number-field:focus, .editor-select:focus {
+  outline: none;
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(219, 155, 53, 0.2);
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--forest);
+}
+
+/* Editor Stage & Checkerboard */
+.editor-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  min-height: 480px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #e9e1d1;
+  touch-action: none;
+  box-shadow: inset 0 0 0 1px rgba(23, 54, 47, 0.12), 0 16px 36px rgba(23, 54, 47, 0.06);
+}
+
+.checker {
+  background-color: #f5efe4;
+  background-image: linear-gradient(45deg, #e6dac7 25%, transparent 25%),
+                    linear-gradient(-45deg, #e6dac7 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #e6dac7 75%),
+                    linear-gradient(-45deg, transparent 75%, #e6dac7 75%);
+  background-size: 26px 26px;
+  background-position: 0 0, 0 13px, 13px -13px, -13px 0;
+}
+
+/* Editable Layer Direct Manipulation */
+.editable-layer {
+  position: absolute;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  transform-origin: center center;
+}
+
+.editable-layer:active {
+  cursor: grabbing;
+}
+
+.editable-layer.selected {
+  outline: 2px solid #f5c75a;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(245, 199, 90, 0.28);
+}
+
+#campaign-layer {
+  z-index: 2;
+}
+
+#campaign-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+#photo-layer {
+  z-index: 5;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 253, 247, 0.36);
+  border: 3px dashed rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 25px rgba(13, 36, 29, 0.2);
+  color: #ffffff;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  transition: border-radius 0.2s ease;
+}
+
+.photo-placeholder.circle {
+  border-radius: 50%;
+}
+
+.photo-placeholder.square {
+  border-radius: 14px;
+}
+
+#name-layer {
+  z-index: 8;
+}
+
+.name-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 4px 7px;
+  color: #fff8e9;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 8 Resize Handles */
+.selection-tools {
+  display: none;
+  pointer-events: auto;
+}
+
+.selected .selection-tools {
+  display: block;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink);
+  background: #f5c75a;
+  border-radius: 3px;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.resize-handle[data-handle="nw"] { left: -7px; top: -7px; cursor: nwse-resize; }
+.resize-handle[data-handle="n"]  { left: calc(50% - 7px); top: -7px; cursor: ns-resize; }
+.resize-handle[data-handle="ne"] { right: -7px; top: -7px; cursor: nesw-resize; }
+.resize-handle[data-handle="w"]  { left: -7px; top: calc(50% - 7px); cursor: ew-resize; }
+.resize-handle[data-handle="e"]  { right: -7px; top: calc(50% - 7px); cursor: ew-resize; }
+.resize-handle[data-handle="sw"] { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.resize-handle[data-handle="s"]  { left: calc(50% - 7px); bottom: -7px; cursor: ns-resize; }
+.resize-handle[data-handle="se"] { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+/* Active layer row in sidebar */
+.layer-row {
+  transition: all 0.15s ease;
+}
+
+.layer-row.active {
+  background: #1f4a3f;
+  color: #ffffff;
+}
+
+.layer-row.active .layer-meta {
+  color: #d5e2d8;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  z-index: 9999;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+/* Live Preview Mode */
+.preview-mode .editable-layer {
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+.preview-mode .selection-tools {
+  display: none !important;
+}
+
+.preview-mode .photo-placeholder {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 253, 247, 0.18);
+}
+
+@media (min-width: 860px) {
+  .editor-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .editor-stage {
+    min-height: 560px;
+  }
+}
