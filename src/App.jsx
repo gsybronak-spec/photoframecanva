@@ -6,6 +6,7 @@ import CampaignList from './components/CampaignList';
 import AnalyticsSection from './components/AnalyticsSection';
 import PreviewModal from './components/PreviewModal';
 import AdminAuthModal from './components/AdminAuthModal';
+import UserPortal from './user/UserPortal';
 
 function slugify(text) {
   return text
@@ -59,6 +60,21 @@ const DEFAULT_NAME_CONFIG = {
 };
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
+  const campaignMatch = currentPath.match(/^\/campaign\/([a-zA-Z0-9\-_]+)/);
+  if (campaignMatch) {
+    return <UserPortal slug={campaignMatch[1]} />;
+  }
+
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('yogframe_admin_token'));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
