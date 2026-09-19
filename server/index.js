@@ -66,7 +66,7 @@ app.get('/campaign/:slug', async (req, res, next) => {
     const htmlTemplate = await fs.promises.readFile(indexPath, 'utf-8');
     const { data: campaign } = await supabase
       .from('yogframe_campaigns')
-      .select('id, name, slug, description, status, campaign_image_url')
+      .select('id, name, slug, description, status, campaign_image_url, social_preview_image_url')
       .eq('slug', slug)
       .maybeSingle();
 
@@ -76,33 +76,39 @@ app.get('/campaign/:slug', async (req, res, next) => {
       const pageDesc = campaign.description && campaign.description.trim()
         ? campaign.description.trim()
         : `Create your personalized YogBoardFrame for ${campaignName}.`;
-      const artworkUrl = campaign.campaign_image_url || '';
+      
+      // Dedicated lightweight preview image (<300 KB JPEG), fallback to original artwork
+      const previewImageUrl = campaign.social_preview_image_url || campaign.campaign_image_url || '';
       const canonicalUrl = `${req.protocol}://${req.get('host')}/campaign/${encodeURIComponent(campaign.slug)}`;
-      const imageType = getMimeType(artworkUrl);
+      const imageType = getMimeType(previewImageUrl);
 
       const metaTags = [
         `    <title>${escapeHtml(pageTitle)}</title>`,
         `    <meta name="description" content="${escapeHtml(pageDesc)}" />`,
         `    <meta property="og:title" content="${escapeHtml(pageTitle)}" />`,
         `    <meta property="og:description" content="${escapeHtml(pageDesc)}" />`,
-        artworkUrl ? `    <meta property="og:image" content="${escapeHtml(artworkUrl)}" />` : '',
-        artworkUrl ? `    <meta property="og:image:secure_url" content="${escapeHtml(artworkUrl)}" />` : '',
-        artworkUrl ? `    <meta property="og:image:type" content="${imageType}" />` : '',
+        previewImageUrl ? `    <meta property="og:image" content="${escapeHtml(previewImageUrl)}" />` : '',
+        previewImageUrl ? `    <meta property="og:image:secure_url" content="${escapeHtml(previewImageUrl)}" />` : '',
+        previewImageUrl ? `    <meta property="og:image:type" content="${imageType}" />` : '',
         `    <meta property="og:image:width" content="1080" />`,
         `    <meta property="og:image:height" content="1080" />`,
+        `    <meta property="og:image:alt" content="${escapeHtml(pageTitle)}" />`,
         `    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
         `    <meta property="og:type" content="website" />`,
         `    <meta name="twitter:card" content="summary_large_image" />`,
         `    <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />`,
         `    <meta name="twitter:description" content="${escapeHtml(pageDesc)}" />`,
-        artworkUrl ? `    <meta name="twitter:image" content="${escapeHtml(artworkUrl)}" />` : '',
-        artworkUrl ? `    <link rel="apple-touch-icon" href="${escapeHtml(artworkUrl)}" />` : '',
+        previewImageUrl ? `    <meta name="twitter:image" content="${escapeHtml(previewImageUrl)}" />` : '',
+        previewImageUrl ? `    <link rel="image_src" href="${escapeHtml(previewImageUrl)}" />` : '',
+        previewImageUrl ? `    <link rel="apple-touch-icon" href="${escapeHtml(previewImageUrl)}" />` : '',
+        previewImageUrl ? `    <link rel="icon" type="${imageType}" href="${escapeHtml(previewImageUrl)}" />` : '',
       ].filter(Boolean).join('\n');
 
       let html = htmlTemplate;
       html = html.replace(/<title>.*?<\/title>/gi, '');
       html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
       html = html.replace(/<link\s+rel=["']apple-touch-icon["'][^>]*>/gi, '');
+      html = html.replace(/<link\s+rel=["']icon["'][^>]*>/gi, '');
 
       if (/<meta\s+charset=[^>]*>/i.test(html)) {
         html = html.replace(/(<meta\s+charset=[^>]*>)/i, `$1\n${metaTags}`);

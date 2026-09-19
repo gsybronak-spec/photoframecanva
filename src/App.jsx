@@ -268,6 +268,7 @@ export default function App() {
           description: c.description || '',
           status: c.status || 'Draft',
           campaign_image_url: c.campaign_image_url || '',
+          social_preview_image_url: c.social_preview_image_url || '',
           campaign_x: normalizeCoord(c.campaign_x, cw, 0),
           campaign_y: normalizeCoord(c.campaign_y, ch, 0),
           campaign_width: Math.max(5, normalizeCoord(c.campaign_width, cw, 100)),
@@ -445,12 +446,44 @@ export default function App() {
         initX = 0;
       }
 
+      // Generate lightweight social preview image (<300 KB JPEG) for WhatsApp/social link crawlers
+      let previewBlob = null;
+      try {
+        const previewCanvas = document.createElement('canvas');
+        const maxDim = 1080;
+        let pW = imgW;
+        let pH = imgH;
+        if (pW > maxDim || pH > maxDim) {
+          if (pW >= pH) {
+            pH = Math.round((pH * maxDim) / pW);
+            pW = maxDim;
+          } else {
+            pW = Math.round((pW * maxDim) / pH);
+            pH = maxDim;
+          }
+        }
+        previewCanvas.width = pW;
+        previewCanvas.height = pH;
+        const pCtx = previewCanvas.getContext('2d');
+        if (pCtx) {
+          pCtx.fillStyle = '#ffffff';
+          pCtx.fillRect(0, 0, pW, pH);
+          pCtx.drawImage(img, 0, 0, pW, pH);
+          previewBlob = await new Promise((res) => previewCanvas.toBlob(res, 'image/jpeg', 0.8));
+        }
+      } catch (pErr) {
+        console.warn('Could not generate client social preview blob:', pErr);
+      }
+
       URL.revokeObjectURL(objectUrl);
 
       // 2. Upload artwork file to Supabase Storage
       const formData = new FormData();
       formData.append('artwork', file);
       formData.append('image', file);
+      if (previewBlob) {
+        formData.append('socialPreview', previewBlob, 'social-preview.jpg');
+      }
       if (campaign.id) {
         formData.append('campaignId', campaign.id);
       }
@@ -466,9 +499,11 @@ export default function App() {
       }
 
       const uploadedUrl = data.url || data.imageUrl;
+      const uploadedSocialPreviewUrl = data.socialPreviewUrl || uploadedUrl;
       setCampaign((prev) => ({
         ...prev,
         campaign_image_url: uploadedUrl,
+        social_preview_image_url: uploadedSocialPreviewUrl,
         campaign_x: initX,
         campaign_y: initY,
         campaign_width: initW,
@@ -510,6 +545,7 @@ export default function App() {
         description: campaign.description,
         status: campaign.status,
         campaign_image_url: campaign.campaign_image_url,
+        social_preview_image_url: campaign.social_preview_image_url || undefined,
         campaign_x: campaign.campaign_x ?? 0,
         campaign_y: campaign.campaign_y ?? 0,
         campaign_width: campaign.campaign_width ?? 100,

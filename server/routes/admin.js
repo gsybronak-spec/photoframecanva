@@ -246,6 +246,7 @@ router.post('/campaigns', requireAdminAuth, async (req, res) => {
       description: description?.trim() || '',
       status: status || 'Draft',
       campaign_image_url: req.body.campaign_image_url || '',
+      social_preview_image_url: req.body.social_preview_image_url || null,
       campaign_x: Number(req.body.campaign_x) || 0,
       campaign_y: Number(req.body.campaign_y) || 0,
       campaign_width: Number(req.body.campaign_width) || 100,
@@ -389,6 +390,10 @@ router.put('/campaigns/:id', requireAdminAuth, async (req, res) => {
 
     if (district !== undefined) {
       updateData.district = district && district.trim() ? district.trim() : null;
+    }
+
+    if (req.body.social_preview_image_url !== undefined) {
+      updateData.social_preview_image_url = req.body.social_preview_image_url || null;
     }
 
     if (status === 'Active') {
@@ -545,6 +550,7 @@ router.post('/upload', requireAdminAuth, uploadMiddleware.fields([{ name: 'artwo
       success: true,
       url: uploadResult.publicUrl,
       imageUrl: uploadResult.publicUrl,
+      socialPreviewUrl: uploadResult.socialPreviewUrl,
       path: uploadResult.path,
     });
   } catch (err) {

@@ -376,6 +376,7 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
       description: description ? description.trim() : null,
       status,
       campaign_image_url: campaign_image_url || null,
+      social_preview_image_url: campData.social_preview_image_url || null,
       campaign_x,
       campaign_y,
       campaign_width,
@@ -541,6 +542,7 @@ app.put('/admin/campaigns/:id', requireAdminAuth, async (c) => {
       }
     }
     if (campData.campaign_image_url !== undefined) campaignUpdates.campaign_image_url = campData.campaign_image_url;
+    if (campData.social_preview_image_url !== undefined) campaignUpdates.social_preview_image_url = campData.social_preview_image_url;
     if (campData.campaign_x !== undefined) campaignUpdates.campaign_x = campData.campaign_x;
     if (campData.campaign_y !== undefined) campaignUpdates.campaign_y = campData.campaign_y;
     if (campData.campaign_width !== undefined) campaignUpdates.campaign_width = campData.campaign_width;
@@ -761,10 +763,31 @@ app.post('/admin/upload', requireAdminAuth, async (c) => {
 
     const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
 
+    let socialPreviewUrl = null;
+    const previewFile = formData.get('socialPreview') || formData.get('preview');
+    if (previewFile && typeof previewFile !== 'string' && typeof previewFile.arrayBuffer === 'function') {
+      try {
+        const previewBuffer = new Uint8Array(await previewFile.arrayBuffer());
+        const previewPath = `campaigns/${campaignId}/social-preview/social-preview_${timestamp}.jpg`;
+        const { error: pErr } = await supabase.storage.from(BUCKET_NAME).upload(previewPath, previewBuffer, {
+          contentType: 'image/jpeg',
+          cacheControl: '31536000',
+          upsert: true,
+        });
+        if (!pErr) {
+          const { data: pUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(previewPath);
+          socialPreviewUrl = pUrlData.publicUrl;
+        }
+      } catch (err) {
+        console.warn('Failed to upload client socialPreview:', err);
+      }
+    }
+
     return c.json({
       success: true,
       url: urlData.publicUrl,
       imageUrl: urlData.publicUrl,
+      socialPreviewUrl: socialPreviewUrl || urlData.publicUrl,
       path: filePath,
     });
   } catch (err) {
