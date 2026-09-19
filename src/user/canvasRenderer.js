@@ -3,12 +3,40 @@
  * Combines Layer 1 (Admin Artwork), Layer 2 (User Photo with Mask), Layer 3 (User Name with Typography)
  */
 
-function loadImage(src) {
+export function loadImage(src, isArtwork = false) {
   return new Promise((resolve, reject) => {
+    if (!src) {
+      const errorMsg = isArtwork
+        ? 'Campaign artwork could not be loaded. Please refresh and try again.'
+        : 'User photo could not be loaded. Please select a photo again.';
+      return reject(new Error(errorMsg));
+    }
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = (e) => reject(new Error('Failed to load image for compositing: ' + src));
+
+    const handleError = () => {
+      const errorMsg = isArtwork
+        ? 'Campaign artwork could not be loaded. Please refresh and try again.'
+        : 'User photo could not be loaded. Please select a photo again.';
+      reject(new Error(errorMsg));
+    };
+
+    img.onload = async () => {
+      if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+        return handleError();
+      }
+      if (typeof img.decode === 'function') {
+        try {
+          await img.decode();
+        } catch (err) {
+          // Decode failed or unsupported, image is still valid from onload
+        }
+      }
+      resolve(img);
+    };
+
+    img.onerror = handleError;
     img.src = src;
   });
 }
@@ -23,7 +51,7 @@ export async function compositeFinalYogFrame({
   photoZoom = 1,
 }) {
   // Load artwork image
-  const artworkImg = await loadImage(campaign.campaign_image_url);
+  const artworkImg = await loadImage(campaign.campaign_image_url, true);
 
   // Determine canvas dimensions based on high-res artwork (minimum 1200px, up to 2000px)
   const baseAspect = 4 / 5; // Standard 4:5 frame ratio
@@ -58,7 +86,7 @@ export async function compositeFinalYogFrame({
   // LAYER 2: User Photo Mask & Adjustment (Respecting Photo Geometry)
   // -----------------------------------------------------------------
   if (photoConfig?.enabled && userPhotoUrl) {
-    const userImg = await loadImage(userPhotoUrl);
+    const userImg = await loadImage(userPhotoUrl, false);
 
     const pw = (targetWidth * (photoConfig.width ?? 35)) / 100;
     const ph = (targetHeight * (photoConfig.height ?? 28)) / 100;
