@@ -123,3 +123,15 @@ npm run dev:client   # Vite React dev server on http://localhost:5173
 npm run build        # Builds optimized frontend into dist/
 npm start            # Runs Express server serving API + static frontend
 ```
+
+### 5. Cloudflare Pages Deployment
+The production application is deployed on Cloudflare Pages as a standalone edge project:
+- **Project Name**: `yogframe-portal`
+- **Live Production URL**: `https://yogframe-portal.pages.dev`
+- **Architecture**: Cloudflare Pages (Frontend SPA in `dist/`) + Cloudflare Pages Functions (Edge API in `functions/api/`)
+- **SPA Fallback**: Managed by `public/_redirects` (`/* /index.html 200`)
+- **Deploy Command**:
+  ```bash
+  npm run build
+  npx wrangler pages deploy dist --project-name yogframe-portal --branch main
+  ```
