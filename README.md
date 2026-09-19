@@ -50,22 +50,19 @@ The database runs on Supabase PostgreSQL with dedicated tables:
 - `font_size`, `letter_spacing` (DOUBLE PRECISION)
 - `created_at`, `updated_at` (TIMESTAMPTZ)
 
-### 4. `yogframe_generated_frames`
+### 4. `yogframe_share_events` (Anonymous Aggregate Analytics)
 - `id` (UUID, Primary Key)
 - `campaign_id` (UUID, Foreign Key → `yogframe_campaigns.id`)
-- `user_name`, `source_photo_url`, `generated_image_url` (TEXT)
+- `event_type` (`generate`, `download`, `whatsapp`, `facebook`, `instagram`, `link`)
 - `created_at` (TIMESTAMPTZ)
+*(Strictly anonymous: no user name, no source photo, no generated image, no IP, no PII stored)*
 
-### 5. `yogframe_share_events`
-- `id` (UUID, Primary Key)
-- `campaign_id` (UUID, Foreign Key → `yogframe_campaigns.id`)
-- `generated_frame_id` (UUID, Foreign Key → `yogframe_generated_frames.id`)
-- `event_type` (`whatsapp`, `facebook`, `instagram`, `link`, `download`)
-- `created_at` (TIMESTAMPTZ)
-- `metadata` (JSONB)
+### 5. `yogframe_generated_frames` (Deprecated / Zero Storage Architecture)
+- Deprecated as YogFrame enforces 100% in-browser generation without server-side persistence of user photos, names, or frames.
 
 ### 6. Storage Bucket
 - `yogframe-campaign-media` (Public bucket with path pattern `campaigns/{campaign_id}/artwork/...`)
+*(Contains ONLY Admin campaign artwork. Zero user-uploaded photos or generated frames are ever stored).*
 
 ---
 
@@ -84,8 +81,10 @@ The database runs on Supabase PostgreSQL with dedicated tables:
 - `DELETE /api/admin/campaigns/:id`: Deletes a campaign and cascades associated configs.
 - `POST /api/admin/upload`: Uploads artwork directly to Supabase storage bucket `yogframe-campaign-media`.
 
-### Public Endpoint (Foundation for User Side)
+### Public Endpoints (User Experience & Anonymous Events)
 - `GET /api/campaigns/by-slug/:slug`: Strictly isolated endpoint returning **only** the requested campaign's public composition. Never returns or leaks other campaigns.
+- `POST /api/campaigns/:id/generate`: Increments campaign frame creation counter anonymously in `yogframe_share_events`. Zero user data or photo uploads.
+- `POST /api/campaigns/:id/share`: Records anonymous share or download events (`whatsapp`, `facebook`, `instagram`, `link`, `download`). No PII or IP logging.
 
 ---
 

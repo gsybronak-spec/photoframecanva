@@ -146,7 +146,7 @@ export default function UserScreen2Adjust({
     setGenerationError('');
 
     try {
-      // 1. Composite high-resolution image on client canvas
+      // 1. Composite high-resolution image on client canvas (strictly in browser memory)
       const generatedDataUrl = await compositeFinalYogFrame({
         campaign,
         photoConfig,
@@ -157,25 +157,20 @@ export default function UserScreen2Adjust({
         photoZoom,
       });
 
-      // 2. Upload to Supabase and persist record in yogframe_generated_frames
-      const res = await fetch(`/api/campaigns/${campaign.id}/generate`, {
+      // Convert data URL to local memory Blob
+      const blobRes = await fetch(generatedDataUrl);
+      const blob = await blobRes.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      // 2. Anonymous Campaign Metric Counter (Zero Personal Data Sent)
+      fetch(`/api/campaigns/${campaign.id}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userName,
-          imageData: generatedDataUrl,
-          sourcePhotoUrl: null,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to save generated frame to server.');
-      }
+        body: JSON.stringify({ eventType: 'generate' }),
+      }).catch((e) => console.warn('Anonymous event warning:', e));
 
       onGenerateSuccess({
-        frameId: data.frame.id,
-        imageUrl: data.imageUrl,
+        objectUrl,
         localDataUrl: generatedDataUrl,
       });
     } catch (err) {

@@ -64,17 +64,19 @@ router.get('/metrics', requireAdminAuth, async (req, res) => {
     const pausedCount = campaigns.filter(c => c.status === 'Paused').length;
     const archivedCount = campaigns.filter(c => c.status === 'Archived').length;
 
-    // 2. Total frames generated
+    // 2. Total frames generated (anonymous count from yogframe_share_events)
     const { count: framesCount, error: frameErr } = await supabase
-      .from('yogframe_generated_frames')
-      .select('*', { count: 'exact', head: true });
+      .from('yogframe_share_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_type', 'generate');
 
     if (frameErr) throw frameErr;
 
-    // 3. Share events & platform breakdown
+    // 3. Share events & platform breakdown (non-generate events)
     const { data: shareEvents, error: shareErr } = await supabase
       .from('yogframe_share_events')
-      .select('event_type');
+      .select('event_type')
+      .neq('event_type', 'generate');
 
     if (shareErr) throw shareErr;
 
@@ -145,31 +147,24 @@ router.get('/campaigns', requireAdminAuth, async (req, res) => {
     const { data: campaigns, error } = await query;
     if (error) throw error;
 
-    // Fetch counts of frames and shares for each campaign
+    // Fetch counts of frames and shares for each campaign anonymously
     const campaignIds = campaigns.map(c => c.id);
     let framesMap = {};
     let sharesMap = {};
 
     if (campaignIds.length > 0) {
-      const { data: framesData } = await supabase
-        .from('yogframe_generated_frames')
-        .select('campaign_id')
-        .in('campaign_id', campaignIds);
-
-      if (framesData) {
-        framesData.forEach(f => {
-          framesMap[f.campaign_id] = (framesMap[f.campaign_id] || 0) + 1;
-        });
-      }
-
-      const { data: sharesData } = await supabase
+      const { data: eventsData } = await supabase
         .from('yogframe_share_events')
-        .select('campaign_id')
+        .select('campaign_id, event_type')
         .in('campaign_id', campaignIds);
 
-      if (sharesData) {
-        sharesData.forEach(s => {
-          sharesMap[s.campaign_id] = (sharesMap[s.campaign_id] || 0) + 1;
+      if (eventsData) {
+        eventsData.forEach(e => {
+          if (e.event_type === 'generate') {
+            framesMap[e.campaign_id] = (framesMap[e.campaign_id] || 0) + 1;
+          } else {
+            sharesMap[e.campaign_id] = (sharesMap[e.campaign_id] || 0) + 1;
+          }
         });
       }
     }

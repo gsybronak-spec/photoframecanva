@@ -75,6 +75,9 @@ export default function UserPortal({ slug }) {
 
   // Photo selection handler
   const handlePhotoSelected = (file) => {
+    if (userPhotoUrl) {
+      URL.revokeObjectURL(userPhotoUrl);
+    }
     setUserPhotoFile(file);
     const objectUrl = URL.createObjectURL(file);
     setUserPhotoUrl(objectUrl);
@@ -82,6 +85,12 @@ export default function UserPortal({ slug }) {
 
   // Reset user session for "Make Another YogFrame"
   const handleMakeAnother = () => {
+    if (userPhotoUrl) {
+      URL.revokeObjectURL(userPhotoUrl);
+    }
+    if (generatedImage?.objectUrl) {
+      URL.revokeObjectURL(generatedImage.objectUrl);
+    }
     setUserName('');
     setUserPhotoFile(null);
     setUserPhotoUrl(null);

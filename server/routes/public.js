@@ -1,5 +1,5 @@
 import express from 'express';
-import { supabase, BUCKET_NAME } from '../db.js';
+import { supabase } from '../db.js';
 
 const router = express.Router();
 
@@ -94,22 +94,19 @@ router.get('/by-slug/:slug', async (req, res) => {
 });
 
 /**
- * Save Generated Frame Endpoint
- * Uploads high-res generated frame PNG to Supabase Storage and records in yogframe_generated_frames
+ * Anonymous Frame Generation Counter Endpoint (Zero User Data Stored)
+ * Records only an anonymous aggregate event in yogframe_share_events (event_type: 'generate').
+ * Does NOT upload user images to storage.
+ * Does NOT store user names or personal photos.
  */
 router.post('/:id/generate', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userName, imageData, sourcePhotoUrl } = req.body;
-
-    if (!imageData) {
-      return res.status(400).json({ error: 'Missing generated image data' });
-    }
 
     // Verify campaign exists
     const { data: campaign, error: campErr } = await supabase
       .from('yogframe_campaigns')
-      .select('id, name')
+      .select('id')
       .eq('id', id)
       .single();
 
@@ -117,70 +114,41 @@ router.post('/:id/generate', async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Convert base64 data to buffer
-    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 9);
-    const filename = `frame_${timestamp}_${randomStr}.png`;
-    const storagePath = `campaigns/${id}/generated/${filename}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(storagePath, buffer, {
-        contentType: 'image/png',
-        cacheControl: '3600',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
-
-    const { data: urlData } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(storagePath);
-
-    const generatedImageUrl = urlData.publicUrl;
-
-    // Save record in yogframe_generated_frames
-    const { data: frameRecord, error: dbError } = await supabase
-      .from('yogframe_generated_frames')
+    // Record anonymous generation event (Zero Personal Data)
+    const { data, error } = await supabase
+      .from('yogframe_share_events')
       .insert({
         campaign_id: id,
-        user_name: (userName || 'Anonymous').trim(),
-        source_photo_url: sourcePhotoUrl || null,
-        generated_image_url: generatedImageUrl,
+        event_type: 'generate',
       })
-      .select()
+      .select('id, campaign_id, event_type, created_at')
       .single();
 
-    if (dbError) {
-      throw dbError;
+    if (error) {
+      console.warn('Anonymous event logging warning:', error.message);
     }
 
     return res.status(201).json({
       success: true,
-      frame: frameRecord,
-      imageUrl: generatedImageUrl,
+      event: data || { campaign_id: id, event_type: 'generate' },
     });
   } catch (err) {
-    console.error('Error generating frame record:', err);
-    return res.status(500).json({ error: err.message || 'Failed to save generated frame' });
+    console.error('Error in anonymous generate event:', err);
+    return res.status(500).json({ error: 'Failed to record event' });
   }
 });
 
 /**
- * Record Share & Download Events
- * Inserts real event records into yogframe_share_events
+ * Anonymous Share & Download Events
+ * Records only anonymous event_type + campaign_id in yogframe_share_events.
+ * Zero personal identity, zero user image URLs, zero IP addresses stored.
  */
 router.post('/:id/share', async (req, res) => {
   try {
     const { id } = req.params;
-    const { eventType, frameId, metadata } = req.body;
+    const { eventType } = req.body;
 
-    const validEvents = ['download', 'whatsapp', 'facebook', 'instagram', 'link'];
+    const validEvents = ['download', 'whatsapp', 'facebook', 'instagram', 'link', 'generate'];
     const cleanEvent = (eventType || '').toLowerCase();
 
     if (!validEvents.includes(cleanEvent)) {
@@ -191,11 +159,9 @@ router.post('/:id/share', async (req, res) => {
       .from('yogframe_share_events')
       .insert({
         campaign_id: id,
-        generated_frame_id: frameId || null,
         event_type: cleanEvent,
-        metadata: metadata || {},
       })
-      .select()
+      .select('id, campaign_id, event_type, created_at')
       .single();
 
     if (error) {
@@ -204,7 +170,7 @@ router.post('/:id/share', async (req, res) => {
 
     return res.json({ success: true, event: data });
   } catch (err) {
-    console.error('Error logging share event:', err);
+    console.error('Error logging anonymous share event:', err);
     return res.status(500).json({ error: err.message || 'Failed to log share event' });
   }
 });

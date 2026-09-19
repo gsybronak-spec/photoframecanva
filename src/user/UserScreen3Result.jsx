@@ -32,10 +32,9 @@ export default function UserScreen3Result({
   const [downloading, setDownloading] = useState(false);
 
   const campaignUrl = `${window.location.origin}/campaign/${campaign.slug}`;
-  const frameUrl = generatedImage.imageUrl || generatedImage.localDataUrl;
-  const frameId = generatedImage.frameId;
+  const frameUrl = generatedImage.objectUrl || generatedImage.localDataUrl;
 
-  // Log share event to backend
+  // Log strictly anonymous event to backend (zero user data sent)
   const logEvent = async (eventType) => {
     try {
       await fetch(`/api/campaigns/${campaign.id}/share`, {
@@ -43,12 +42,10 @@ export default function UserScreen3Result({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventType,
-          frameId,
-          metadata: { platform: eventType, timestamp: new Date().toISOString() },
         }),
       });
     } catch (e) {
-      console.warn('Share event logging error:', e);
+      console.warn('Anonymous event logging warning:', e);
     }
   };
 
