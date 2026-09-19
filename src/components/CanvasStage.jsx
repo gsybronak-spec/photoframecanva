@@ -171,6 +171,7 @@ export default function CanvasStage({
     if (file) {
       onArtworkUpload(file);
     }
+    e.target.value = '';
   };
 
   const hasArtwork = Boolean(campaign.campaign_image_url);
@@ -216,7 +217,7 @@ export default function CanvasStage({
             id="campaign-artwork-input"
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/jpg,image/webp,.png,.jpg,.jpeg,.webp"
             className="hidden"
             onChange={handleFileChange}
           />

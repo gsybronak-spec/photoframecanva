@@ -484,23 +484,25 @@ router.delete('/campaigns/:id', requireAdminAuth, async (req, res) => {
 // -------------------------------------------------------------
 // Image Upload Endpoint (Requirement 22)
 // -------------------------------------------------------------
-router.post('/upload', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+router.post('/upload', requireAdminAuth, uploadMiddleware.fields([{ name: 'artwork', maxCount: 1 }, { name: 'image', maxCount: 1 }]), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image file provided' });
+    const file = req.files?.['artwork']?.[0] || req.files?.['image']?.[0] || req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No artwork file provided' });
     }
 
     const campaignId = req.body.campaignId || 'general';
     const uploadResult = await uploadArtworkToStorage(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype,
+      file.buffer,
+      file.originalname,
+      file.mimetype,
       campaignId
     );
 
     return res.json({
       success: true,
       url: uploadResult.publicUrl,
+      imageUrl: uploadResult.publicUrl,
       path: uploadResult.path,
     });
   } catch (err) {

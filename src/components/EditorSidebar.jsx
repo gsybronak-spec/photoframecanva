@@ -47,6 +47,7 @@ export default function EditorSidebar({
     if (file) {
       onArtworkUpload(file);
     }
+    e.target.value = '';
   };
 
   return (
@@ -282,7 +283,7 @@ export default function EditorSidebar({
             <input
               ref={replaceInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/jpg,image/webp,.png,.jpg,.jpeg,.webp"
               className="hidden"
               onChange={handleReplaceFile}
             />

@@ -553,31 +553,69 @@ app.post('/admin/upload', requireAdminAuth, async (c) => {
   try {
     const supabase = getSupabase(c);
     const formData = await c.req.raw.formData();
-    const file = formData.get('artwork');
+
+    // Support both 'artwork' and 'image' field names
+    const file = formData.get('artwork') || formData.get('image');
     const campaignId = formData.get('campaignId') || 'general';
 
-    if (!file || typeof file === 'string') {
+    if (!file || typeof file === 'string' || typeof file.arrayBuffer !== 'function') {
       return c.json({ error: 'No artwork file provided' }, 400);
     }
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type.toLowerCase())) {
+    // File size validation (20 MB limit)
+    const MAX_FILE_SIZE = 20 * 1024 * 1024;
+    if (file.size && file.size > MAX_FILE_SIZE) {
+      return c.json({ error: 'Artwork file exceeds 20MB limit' }, 400);
+    }
+
+    const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
+    const ALLOWED_MIME_TYPES = [
+      'image/png',
+      'image/x-png',
+      'image/jpeg',
+      'image/jpg',
+      'image/pjpeg',
+      'image/webp',
+    ];
+
+    const originalName = file.name || 'artwork.png';
+    const lastDot = originalName.lastIndexOf('.');
+    const ext = lastDot !== -1 ? originalName.slice(lastDot).toLowerCase() : '';
+    const rawMime = (file.type || '').toLowerCase().trim();
+
+    const isExtensionValid = ALLOWED_EXTENSIONS.includes(ext);
+    const isMimeValid =
+      ALLOWED_MIME_TYPES.includes(rawMime) ||
+      ((rawMime === '' || rawMime === 'application/octet-stream') && isExtensionValid);
+
+    if (!isExtensionValid || !isMimeValid) {
+      console.warn(`[Upload] Rejected unsupported format - ext: "${ext}", mime: "${rawMime}"`);
       return c.json({ error: 'Only PNG, JPG, JPEG, and WEBP image formats are supported' }, 400);
     }
+
+    // Determine canonical Content-Type for Supabase Storage
+    let contentType = rawMime;
+    if (!ALLOWED_MIME_TYPES.includes(contentType)) {
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.webp') contentType = 'image/webp';
+      else contentType = 'image/png';
+    }
+    if (contentType === 'image/x-png') contentType = 'image/png';
+    if (contentType === 'image/pjpeg' || contentType === 'image/jpg') contentType = 'image/jpeg';
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
 
-    const ext = file.name ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '.png';
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 9);
-    const safeFilename = `artwork_${timestamp}_${randomStr}${ext}`;
+    const safeFilename = `artwork_${timestamp}_${randomStr}${ext || '.png'}`;
     const filePath = `campaigns/${campaignId}/artwork/${safeFilename}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, buffer, {
-        contentType: file.type,
+        contentType,
         cacheControl: '3600',
         upsert: true,
       });
@@ -590,6 +628,7 @@ app.post('/admin/upload', requireAdminAuth, async (c) => {
 
     return c.json({
       success: true,
+      url: urlData.publicUrl,
       imageUrl: urlData.publicUrl,
       path: filePath,
     });

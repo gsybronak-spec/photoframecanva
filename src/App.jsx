@@ -326,6 +326,7 @@ export default function App() {
     setUploadingArtwork(true);
     try {
       const formData = new FormData();
+      formData.append('artwork', file);
       formData.append('image', file);
       if (campaign.id) {
         formData.append('campaignId', campaign.id);
@@ -341,9 +342,10 @@ export default function App() {
         throw new Error(data.error || 'Failed to upload artwork');
       }
 
+      const uploadedUrl = data.url || data.imageUrl;
       setCampaign((prev) => ({
         ...prev,
-        campaign_image_url: data.url,
+        campaign_image_url: uploadedUrl,
       }));
       setActiveLayer('campaign');
       showToast('Artwork uploaded to storage as base layer.');
