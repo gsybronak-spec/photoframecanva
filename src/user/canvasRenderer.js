@@ -53,10 +53,9 @@ export async function compositeFinalYogFrame({
   // Load artwork image
   const artworkImg = await loadImage(campaign.campaign_image_url, true);
 
-  // Determine canvas dimensions based on high-res artwork (minimum 1200px, up to 2000px)
-  const baseAspect = 4 / 5; // Standard 4:5 frame ratio
-  let targetWidth = Math.max(1200, Math.min(artworkImg.naturalWidth || 1400, 2000));
-  let targetHeight = Math.round(targetWidth / baseAspect);
+  // Target output canvas dimensions directly from campaign configuration
+  const targetWidth = Number(campaign.canvas_width) || 1080;
+  const targetHeight = Number(campaign.canvas_height) || 1350;
 
   const canvas = document.createElement('canvas');
   canvas.width = targetWidth;

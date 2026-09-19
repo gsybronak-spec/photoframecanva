@@ -32,6 +32,8 @@ const DEFAULT_CAMPAIGN = {
   campaign_width: 100,
   campaign_height: 100,
   campaign_rotation: 0,
+  canvas_width: 1080,
+  canvas_height: 1350,
 };
 
 const DEFAULT_PHOTO_CONFIG = {
@@ -205,6 +207,8 @@ export default function App() {
           campaign_width: c.campaign_width ?? 100,
           campaign_height: c.campaign_height ?? 100,
           campaign_rotation: c.campaign_rotation ?? 0,
+          canvas_width: c.canvas_width || 1080,
+          canvas_height: c.canvas_height || 1350,
         });
 
         if (c.photo_config) {
@@ -319,12 +323,51 @@ export default function App() {
     showToast('Name Area removed.');
   };
 
-  // Artwork File Upload
+  // Artwork File Upload with Cover-style Initial Placement
   const handleArtworkUpload = async (file) => {
     if (!file) return;
 
     setUploadingArtwork(true);
     try {
+      // 1. Read image natural dimensions to calculate initial exact cover fit
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = objectUrl;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+
+      const imgW = img.naturalWidth || 1080;
+      const imgH = img.naturalHeight || 1350;
+      const imgAspect = imgW / imgH;
+
+      const targetW = campaign.canvas_width || 1080;
+      const targetH = campaign.canvas_height || 1350;
+      const canvasAspect = targetW / targetH;
+
+      let initW = 100;
+      let initH = 100;
+      let initX = 0;
+      let initY = 0;
+
+      if (imgAspect > canvasAspect) {
+        // Image is wider than canvas -> height 100%, width expanded & centered
+        initH = 100;
+        initW = Math.round((imgAspect / canvasAspect) * 1000) / 10;
+        initX = Math.round(((100 - initW) / 2) * 10) / 10;
+        initY = 0;
+      } else {
+        // Image is taller than canvas -> width 100%, height expanded & centered
+        initW = 100;
+        initH = Math.round((canvasAspect / imgAspect) * 1000) / 10;
+        initY = Math.round(((100 - initH) / 2) * 10) / 10;
+        initX = 0;
+      }
+
+      URL.revokeObjectURL(objectUrl);
+
+      // 2. Upload artwork file to Supabase Storage
       const formData = new FormData();
       formData.append('artwork', file);
       formData.append('image', file);
@@ -346,9 +389,14 @@ export default function App() {
       setCampaign((prev) => ({
         ...prev,
         campaign_image_url: uploadedUrl,
+        campaign_x: initX,
+        campaign_y: initY,
+        campaign_width: initW,
+        campaign_height: initH,
+        campaign_rotation: 0,
       }));
       setActiveLayer('campaign');
-      showToast('Artwork uploaded to storage as base layer.');
+      showToast('Artwork uploaded to storage as base layer with exact cover fit.');
     } catch (err) {
       showToast(`Upload failed: ${err.message}`);
     } finally {
@@ -374,17 +422,30 @@ export default function App() {
     try {
       let targetId = campaign.id;
 
-      // 1. Create campaign first if new
+      // 1. Normalized Save Payload
+      const savePayload = {
+        name: campaign.name,
+        slug: campaign.slug,
+        description: campaign.description,
+        status: campaign.status,
+        campaign_image_url: campaign.campaign_image_url,
+        campaign_x: campaign.campaign_x ?? 0,
+        campaign_y: campaign.campaign_y ?? 0,
+        campaign_width: campaign.campaign_width ?? 100,
+        campaign_height: campaign.campaign_height ?? 100,
+        campaign_rotation: campaign.campaign_rotation ?? 0,
+        canvas_width: Number(campaign.canvas_width) || 1080,
+        canvas_height: Number(campaign.canvas_height) || 1350,
+        photo_config: photoConfig,
+        name_config: nameConfig,
+      };
+
+      // 2. Create campaign first if new
       if (!targetId) {
         const createRes = await authFetch('/api/admin/campaigns', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: campaign.name,
-            slug: campaign.slug,
-            description: campaign.description,
-            status: campaign.status,
-          }),
+          body: JSON.stringify(savePayload),
         });
 
         const createData = await createRes.json();
@@ -394,22 +455,7 @@ export default function App() {
         targetId = createData.campaign.id;
       }
 
-      // 2. Save full composition parameters to database
-      const savePayload = {
-        name: campaign.name,
-        slug: campaign.slug,
-        description: campaign.description,
-        status: campaign.status,
-        campaign_image_url: campaign.campaign_image_url,
-        campaign_x: campaign.campaign_x,
-        campaign_y: campaign.campaign_y,
-        campaign_width: campaign.campaign_width,
-        campaign_height: campaign.campaign_height,
-        campaign_rotation: campaign.campaign_rotation,
-        photo_config: photoConfig,
-        name_config: nameConfig,
-      };
-
+      // 3. Save full composition parameters to database
       const putRes = await authFetch(`/api/admin/campaigns/${targetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -421,15 +467,21 @@ export default function App() {
         throw new Error(putData.error || 'Failed to save campaign composition');
       }
 
+      const savedCampaign = putData.campaign || {};
+      const savedSlug = savedCampaign.slug || campaign.slug || '';
+
       setCampaign((prev) => ({
         ...prev,
         id: targetId,
-        slug: putData.campaign.slug,
+        slug: savedSlug,
+        canvas_width: savedCampaign.canvas_width || prev.canvas_width || 1080,
+        canvas_height: savedCampaign.canvas_height || prev.canvas_height || 1350,
+        campaign_image_url: savedCampaign.campaign_image_url || prev.campaign_image_url,
       }));
 
       setSaveMessage({
         type: 'success',
-        text: `Campaign saved successfully. Composition persisted to database at /campaign/${putData.campaign.slug}`,
+        text: `Campaign saved successfully. Composition persisted to database at /campaign/${savedSlug}`,
       });
 
       showToast(`Campaign "${campaign.name}" saved!`);

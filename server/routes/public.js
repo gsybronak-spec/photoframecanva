@@ -30,6 +30,8 @@ router.get('/by-slug/:slug', async (req, res) => {
         campaign_width,
         campaign_height,
         campaign_rotation,
+        canvas_width,
+        canvas_height,
         photo_config:yogframe_campaign_photo_config(
           enabled,
           shape,
@@ -78,6 +80,8 @@ router.get('/by-slug/:slug', async (req, res) => {
       campaign_width: campaign.campaign_width,
       campaign_height: campaign.campaign_height,
       campaign_rotation: campaign.campaign_rotation,
+      canvas_width: campaign.canvas_width || 1080,
+      canvas_height: campaign.canvas_height || 1350,
       photo_config: Array.isArray(campaign.photo_config)
         ? campaign.photo_config[0] || null
         : campaign.photo_config,

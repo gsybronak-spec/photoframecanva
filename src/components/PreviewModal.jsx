@@ -58,7 +58,13 @@ export default function PreviewModal({ campaign, photoConfig, nameConfig, onClos
 
         {/* Preview Stage (Clean Frame without Handles) */}
         <div className="mt-5 flex justify-center">
-          <div className="relative w-full max-w-sm aspect-[4/5] overflow-hidden rounded-2xl bg-[#e9e1d1] checker shadow-inner">
+          <div
+            className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-[#e9e1d1] checker shadow-inner"
+            style={{
+              aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+              maxHeight: '68vh',
+            }}
+          >
             {/* Layer 1: Base Artwork */}
             {campaign.campaign_image_url ? (
               <div

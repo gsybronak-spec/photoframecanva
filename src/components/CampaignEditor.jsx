@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Save, RefreshCw, Link as LinkIcon, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Save, RefreshCw, Link as LinkIcon, AlertCircle, CheckCircle, LayoutTemplate } from 'lucide-react';
 import CanvasStage from './CanvasStage';
 import EditorSidebar from './EditorSidebar';
+import { PRESET_CATEGORIES, SIZE_PRESETS, findMatchingPreset } from '../utils/sizePresets';
 
 export default function CampaignEditor({
   campaign,
@@ -24,6 +25,9 @@ export default function CampaignEditor({
   saveMessage,
 }) {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const activePreset = findMatchingPreset(campaign.canvas_width, campaign.canvas_height);
+  const [selectedCategory, setSelectedCategory] = useState(activePreset.category || 'Instagram');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -110,6 +114,142 @@ export default function CampaignEditor({
             value={campaign.description || ''}
             onChange={(e) => onUpdateCampaignField('description', e.target.value)}
           />
+        </div>
+
+        {/* PhotoFrame Size Presets Section */}
+        <div className="mt-5 rounded-2xl border border-[#e8dfcf] bg-[#faf6ed] p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <LayoutTemplate className="h-4 w-4 text-[#1f4a3f]" />
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#1f4a3f]">
+                  PhotoFrame Size & Output Dimensions
+                </label>
+              </div>
+              <p className="mt-0.5 text-xs text-[#52665e]">
+                Choose target output aspect ratio. Canvas and generated exports will match this exact size.
+              </p>
+            </div>
+
+            {/* Small visual aspect ratio badge & preview */}
+            <div className="flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2 border border-[#e8dfcf] shadow-sm">
+              <div
+                className="border-2 border-[#1f4a3f] bg-[#e9e1d1] rounded-sm transition-all"
+                style={{
+                  width: `${Math.min(28, Math.max(12, Math.round(22 * ((campaign.canvas_width || 1080) / (campaign.canvas_height || 1350)))))}px`,
+                  height: '22px',
+                }}
+                title={`Aspect ratio: ${campaign.canvas_width || 1080} × ${campaign.canvas_height || 1350}`}
+              />
+              <div className="text-right">
+                <span className="block font-mono text-xs font-extrabold text-[#17362f]">
+                  {campaign.canvas_width || 1080} × {campaign.canvas_height || 1350} px
+                </span>
+                <span className="block text-[10px] font-bold text-[#79987e] uppercase">
+                  {activePreset.aspectRatio || 'Preset'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Category Tabs: Instagram | Facebook | WhatsApp | Custom */}
+          <div className="mt-3.5 flex flex-wrap gap-1.5 border-b border-[#e8dfcf] pb-2.5">
+            {PRESET_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  if (cat !== 'Custom') {
+                    const firstOfCat = SIZE_PRESETS.find((p) => p.category === cat);
+                    if (firstOfCat) {
+                      onUpdateCampaignField('canvas_width', firstOfCat.width);
+                      onUpdateCampaignField('canvas_height', firstOfCat.height);
+                    }
+                  }
+                }}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-[#1f4a3f] text-white shadow-sm'
+                    : 'bg-white text-[#52665e] border border-[#e8dfcf] hover:bg-[#f6efe4]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Presets Grid for Selected Category */}
+          {selectedCategory !== 'Custom' ? (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {SIZE_PRESETS.filter((p) => p.category === selectedCategory).map((preset) => {
+                const isSelected =
+                  (campaign.canvas_width || 1080) === preset.width &&
+                  (campaign.canvas_height || 1350) === preset.height;
+
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      onUpdateCampaignField('canvas_width', preset.width);
+                      onUpdateCampaignField('canvas_height', preset.height);
+                    }}
+                    className={`flex flex-col text-left rounded-xl p-3 border transition-all ${
+                      isSelected
+                        ? 'border-[#db9b35] bg-white ring-2 ring-[#db9b35]/30 shadow-sm'
+                        : 'border-[#e8dfcf] bg-white hover:border-[#1f4a3f]/40 hover:bg-[#fdfbf6]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#17362f]">{preset.name}</span>
+                      <span className={`text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded ${isSelected ? 'bg-[#f4e6c8] text-[#935e20]' : 'bg-[#f0ebe1] text-[#6b7280]'}`}>
+                        {preset.badge}
+                      </span>
+                    </div>
+                    <span className="mt-1 font-mono text-[11px] font-semibold text-[#1f4a3f]">
+                      {preset.width} × {preset.height} px
+                    </span>
+                    <span className="mt-0.5 text-[10px] text-[#52665e] line-clamp-1">
+                      {preset.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* Custom Dimensions Inputs */
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white p-3.5 rounded-xl border border-[#e8dfcf]">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#52665e]" htmlFor="custom-width">
+                  Output Width (px)
+                </label>
+                <input
+                  id="custom-width"
+                  type="number"
+                  min="300"
+                  max="4000"
+                  value={campaign.canvas_width || 1080}
+                  onChange={(e) => onUpdateCampaignField('canvas_width', Math.max(100, parseInt(e.target.value) || 1080))}
+                  className="mt-1 w-full rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#52665e]" htmlFor="custom-height">
+                  Output Height (px)
+                </label>
+                <input
+                  id="custom-height"
+                  type="number"
+                  min="300"
+                  max="4000"
+                  value={campaign.canvas_height || 1350}
+                  onChange={(e) => onUpdateCampaignField('canvas_height', Math.max(100, parseInt(e.target.value) || 1350))}
+                  className="mt-1 w-full rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Public URL Indicator */}

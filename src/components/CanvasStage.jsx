@@ -182,7 +182,12 @@ export default function CanvasStage({
       {!hasArtwork && (
         <div
           id="upload-state"
-          className="checker rounded-[24px] border-2 border-dashed border-[#bda980] p-8 sm:p-12 text-center transition-all hover:border-[#935e20]"
+          className="checker rounded-[24px] border-2 border-dashed border-[#bda980] p-8 sm:p-12 text-center transition-all hover:border-[#935e20] flex flex-col items-center justify-center"
+          style={{
+            aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+            maxHeight: '65vh',
+            margin: '0 auto',
+          }}
         >
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#f4e6c8] text-[#935e20] shadow-sm">
             <Upload className="h-8 w-8" />
@@ -231,6 +236,11 @@ export default function CanvasStage({
             id="editor-stage"
             ref={stageRef}
             className={`editor-stage checker ${isPreviewMode ? 'preview-mode' : ''}`}
+            style={{
+              aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+              maxHeight: '75vh',
+              margin: '0 auto',
+            }}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}

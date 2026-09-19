@@ -167,7 +167,14 @@ export default function UserScreen3Result({
 
       {/* Generated Result Display Card */}
       <div className="soft-card mt-5 overflow-hidden rounded-[26px] bg-white p-3 border border-[#e8dfcf] shadow-md">
-        <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl bg-[#e9e1d1] checker flex items-center justify-center">
+        <div
+          className="relative w-full overflow-hidden rounded-2xl bg-[#e9e1d1] checker flex items-center justify-center"
+          style={{
+            aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+            maxHeight: '68vh',
+            margin: '0 auto',
+          }}
+        >
           <img
             src={frameUrl}
             alt={`Personalized frame for ${userName}`}

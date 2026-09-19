@@ -68,7 +68,12 @@ export default function UserScreen1Input({
       {/* Campaign Artwork Presentation Card */}
       <div className="mt-5 overflow-hidden rounded-[24px] border border-[#e8dfcf] bg-white soft-card">
         {campaign.campaign_image_url ? (
-          <div className="relative w-full aspect-[4/5] max-h-[340px] overflow-hidden bg-[#e9e1d1] checker flex items-center justify-center">
+          <div
+            className="relative w-full max-h-[340px] overflow-hidden bg-[#e9e1d1] checker flex items-center justify-center"
+            style={{
+              aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+            }}
+          >
             <img
               src={campaign.campaign_image_url}
               alt={campaign.name}
@@ -85,7 +90,12 @@ export default function UserScreen1Input({
             </div>
           </div>
         ) : (
-          <div className="aspect-[4/5] grid place-items-center bg-[#f5efe4] text-xs text-gray-500">
+          <div
+            className="grid place-items-center bg-[#f5efe4] text-xs text-gray-500"
+            style={{
+              aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+            }}
+          >
             Campaign artwork loading...
           </div>
         )}

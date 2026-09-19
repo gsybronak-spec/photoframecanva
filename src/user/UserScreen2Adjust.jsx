@@ -137,7 +137,8 @@ export default function UserScreen2Adjust({
     }
     const pw = photoGeo.w || 35;
     const ph = photoGeo.h || 28;
-    return (pw / ph) * 0.8;
+    const canvasRatio = (campaign.canvas_width || 1080) / (campaign.canvas_height || 1350);
+    return (pw / ph) * canvasRatio;
   };
 
   const currentMaskAspect = getMaskAspect();
@@ -359,7 +360,14 @@ export default function UserScreen2Adjust({
 
       {/* Interactive Adjustment Canvas */}
       <div className="mt-4 soft-card rounded-[24px] bg-white p-3 border border-[#e8dfcf] shadow-sm">
-        <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl bg-[#e9e1d1] checker shadow-inner select-none">
+        <div
+          className="relative w-full overflow-hidden rounded-2xl bg-[#e9e1d1] checker shadow-inner select-none"
+          style={{
+            aspectRatio: `${campaign.canvas_width || 1080} / ${campaign.canvas_height || 1350}`,
+            maxHeight: '68vh',
+            margin: '0 auto',
+          }}
+        >
           {/* LAYER 1: Admin Campaign Artwork (Exact Saved Coordinates & Rotation) */}
           <div
             style={{

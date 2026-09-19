@@ -220,12 +220,14 @@ router.post('/campaigns', requireAdminAuth, async (req, res) => {
         slug: finalSlug,
         description: description?.trim() || '',
         status: status || 'Draft',
-        campaign_image_url: '',
-        campaign_x: 0,
-        campaign_y: 0,
-        campaign_width: 100,
-        campaign_height: 100,
-        campaign_rotation: 0,
+        campaign_image_url: req.body.campaign_image_url || '',
+        campaign_x: Number(req.body.campaign_x) || 0,
+        campaign_y: Number(req.body.campaign_y) || 0,
+        campaign_width: Number(req.body.campaign_width) || 100,
+        campaign_height: Number(req.body.campaign_height) || 100,
+        campaign_rotation: Number(req.body.campaign_rotation) || 0,
+        canvas_width: Number(req.body.canvas_width) || 1080,
+        canvas_height: Number(req.body.canvas_height) || 1350,
       })
       .select()
       .single();
@@ -346,6 +348,8 @@ router.put('/campaigns/:id', requireAdminAuth, async (req, res) => {
       campaign_width: Number(campaign_width) || 100,
       campaign_height: Number(campaign_height) || 100,
       campaign_rotation: Number(campaign_rotation) || 0,
+      canvas_width: Number(req.body.canvas_width) || 1080,
+      canvas_height: Number(req.body.canvas_height) || 1350,
       updated_at: new Date().toISOString(),
     };
 
@@ -405,7 +409,7 @@ router.put('/campaigns/:id', requireAdminAuth, async (req, res) => {
         font_color: name_config.font_color || '#fff8e9',
         font_weight: name_config.font_weight || 'bold',
         alignment: name_config.alignment || 'center',
-        letter_spacing: Number(name_config.letter_spacing) ?? 1,
+        letter_spacing: name_config.letter_spacing != null ? Number(name_config.letter_spacing) : 1,
         updated_at: new Date().toISOString(),
       };
 

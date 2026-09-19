@@ -280,13 +280,30 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
   try {
     const supabase = getSupabase(c);
     const body = await c.req.json();
-    const { name, description, status = 'Draft', campaign_image_url } = body;
+    const campData = body.campaign || body;
+    const photoData = body.photoConfig || body.photo_config;
+    const nameData = body.nameConfig || body.name_config;
+
+    const {
+      name,
+      slug,
+      description,
+      status = 'Draft',
+      campaign_image_url,
+      campaign_x = 0,
+      campaign_y = 0,
+      campaign_width = 100,
+      campaign_height = 100,
+      campaign_rotation = 0,
+      canvas_width = 1080,
+      canvas_height = 1350,
+    } = campData;
 
     if (!name || !name.trim()) {
       return c.json({ error: 'Campaign name is required' }, 400);
     }
 
-    let baseSlug = slugify(name);
+    let baseSlug = slugify(slug || name);
     let uniqueSlug = baseSlug;
     let counter = 1;
 
@@ -310,11 +327,13 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
         description: description ? description.trim() : null,
         status,
         campaign_image_url: campaign_image_url || null,
-        campaign_x: 0,
-        campaign_y: 0,
-        campaign_width: 800,
-        campaign_height: 800,
-        campaign_rotation: 0,
+        campaign_x,
+        campaign_y,
+        campaign_width,
+        campaign_height,
+        campaign_rotation,
+        canvas_width: Number(canvas_width) || 1080,
+        canvas_height: Number(canvas_height) || 1350,
       })
       .select()
       .single();
@@ -325,13 +344,13 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
       .from('yogframe_campaign_photo_config')
       .insert({
         campaign_id: campaign.id,
-        enabled: true,
-        shape: 'Circle',
-        x: 275,
-        y: 200,
-        width: 250,
-        height: 250,
-        rotation: 0,
+        enabled: photoData?.enabled ?? false,
+        shape: photoData?.shape || 'Square',
+        x: photoData?.x ?? 32,
+        y: photoData?.y ?? 42,
+        width: photoData?.width ?? 35,
+        height: photoData?.height ?? 28,
+        rotation: photoData?.rotation ?? 0,
       })
       .select()
       .single();
@@ -342,18 +361,18 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
       .from('yogframe_campaign_name_config')
       .insert({
         campaign_id: campaign.id,
-        enabled: true,
-        x: 200,
-        y: 480,
-        width: 400,
-        height: 60,
-        rotation: 0,
-        font_family: 'Playfair Display',
-        font_size: 32,
-        font_color: '#1f4a3f',
-        font_weight: '700',
-        alignment: 'center',
-        letter_spacing: 0,
+        enabled: nameData?.enabled ?? false,
+        x: nameData?.x ?? 18,
+        y: nameData?.y ?? 78,
+        width: nameData?.width ?? 64,
+        height: nameData?.height ?? 10,
+        rotation: nameData?.rotation ?? 0,
+        font_family: nameData?.font_family || 'DM Sans',
+        font_size: nameData?.font_size != null ? Number(nameData.font_size) : 26,
+        font_color: nameData?.font_color || '#fff8e9',
+        font_weight: nameData?.font_weight || 'bold',
+        alignment: nameData?.alignment || 'center',
+        letter_spacing: nameData?.letter_spacing != null ? Number(nameData.letter_spacing) : 1,
       })
       .select()
       .single();
@@ -418,77 +437,130 @@ app.put('/admin/campaigns/:id', requireAdminAuth, async (c) => {
     const supabase = getSupabase(c);
     const id = c.req.param('id');
     const body = await c.req.json();
-    const { campaign, photoConfig, nameConfig } = body;
 
-    if (campaign) {
-      const { error: campErr } = await supabase
-        .from('yogframe_campaigns')
-        .update({
-          name: campaign.name,
-          slug: campaign.slug,
-          description: campaign.description,
-          status: campaign.status,
-          campaign_image_url: campaign.campaign_image_url,
-          campaign_x: campaign.campaign_x,
-          campaign_y: campaign.campaign_y,
-          campaign_width: campaign.campaign_width,
-          campaign_height: campaign.campaign_height,
-          campaign_rotation: campaign.campaign_rotation,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+    // Support both flat body payload (from App.jsx savePayload) AND nested body { campaign, photoConfig, nameConfig }
+    const campData = body.campaign || body;
+    const photoData = body.photoConfig || body.photo_config;
+    const nameData = body.nameConfig || body.name_config;
 
-      if (campErr) throw campErr;
+    // Check if campaign exists
+    const { data: existingCamp, error: fetchErr } = await supabase
+      .from('yogframe_campaigns')
+      .select('id, name, slug')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchErr || !existingCamp) {
+      return c.json({ error: 'Campaign not found' }, 404);
     }
 
-    if (photoConfig) {
-      const { error: photoErr } = await supabase
+    // Determine slug
+    let finalSlug = campData.slug ? slugify(campData.slug) : undefined;
+    if (finalSlug) {
+      const { data: slugCheck } = await supabase
+        .from('yogframe_campaigns')
+        .select('id')
+        .eq('slug', finalSlug)
+        .neq('id', id)
+        .maybeSingle();
+
+      if (slugCheck) {
+        finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`;
+      }
+    }
+
+    const campaignUpdates = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (campData.name !== undefined) campaignUpdates.name = campData.name.trim();
+    if (finalSlug !== undefined) campaignUpdates.slug = finalSlug;
+    if (campData.description !== undefined) campaignUpdates.description = campData.description ? campData.description.trim() : null;
+    if (campData.status !== undefined) campaignUpdates.status = campData.status;
+    if (campData.campaign_image_url !== undefined) campaignUpdates.campaign_image_url = campData.campaign_image_url;
+    if (campData.campaign_x !== undefined) campaignUpdates.campaign_x = campData.campaign_x;
+    if (campData.campaign_y !== undefined) campaignUpdates.campaign_y = campData.campaign_y;
+    if (campData.campaign_width !== undefined) campaignUpdates.campaign_width = campData.campaign_width;
+    if (campData.campaign_height !== undefined) campaignUpdates.campaign_height = campData.campaign_height;
+    if (campData.campaign_rotation !== undefined) campaignUpdates.campaign_rotation = campData.campaign_rotation;
+    if (campData.canvas_width !== undefined) campaignUpdates.canvas_width = Number(campData.canvas_width) || 1080;
+    if (campData.canvas_height !== undefined) campaignUpdates.canvas_height = Number(campData.canvas_height) || 1350;
+
+    const { data: updatedCamp, error: campErr } = await supabase
+      .from('yogframe_campaigns')
+      .update(campaignUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (campErr) throw campErr;
+
+    // Photo config upsert
+    let updatedPhoto = null;
+    if (photoData) {
+      const { data: pData, error: photoErr } = await supabase
         .from('yogframe_campaign_photo_config')
         .upsert(
           {
             campaign_id: id,
-            enabled: photoConfig.enabled !== false,
-            shape: photoConfig.shape || 'Circle',
-            x: photoConfig.x ?? 275,
-            y: photoConfig.y ?? 200,
-            width: photoConfig.width ?? 250,
-            height: photoConfig.height ?? 250,
-            rotation: photoConfig.rotation ?? 0,
+            enabled: photoData.enabled !== false,
+            shape: photoData.shape || 'Square',
+            x: photoData.x ?? 32,
+            y: photoData.y ?? 42,
+            width: photoData.width ?? 35,
+            height: photoData.height ?? 28,
+            rotation: photoData.rotation ?? 0,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'campaign_id' }
-        );
+        )
+        .select()
+        .single();
 
       if (photoErr) throw photoErr;
+      updatedPhoto = pData;
     }
 
-    if (nameConfig) {
-      const { error: nameErr } = await supabase
+    // Name config upsert
+    let updatedName = null;
+    if (nameData) {
+      const { data: nData, error: nameErr } = await supabase
         .from('yogframe_campaign_name_config')
         .upsert(
           {
             campaign_id: id,
-            enabled: nameConfig.enabled !== false,
-            x: nameConfig.x ?? 200,
-            y: nameConfig.y ?? 480,
-            width: nameConfig.width ?? 400,
-            height: nameConfig.height ?? 60,
-            rotation: nameConfig.rotation ?? 0,
-            font_family: nameConfig.font_family || 'Playfair Display',
-            font_size: nameConfig.font_size ?? 32,
-            font_color: nameConfig.font_color || '#1f4a3f',
-            font_weight: nameConfig.font_weight || '700',
-            alignment: nameConfig.alignment || 'center',
-            letter_spacing: nameConfig.letter_spacing ?? 0,
+            enabled: nameData.enabled !== false,
+            x: nameData.x ?? 18,
+            y: nameData.y ?? 78,
+            width: nameData.width ?? 64,
+            height: nameData.height ?? 10,
+            rotation: nameData.rotation ?? 0,
+            font_family: nameData.font_family || 'DM Sans',
+            font_size: nameData.font_size != null ? Number(nameData.font_size) : 26,
+            font_color: nameData.font_color || '#fff8e9',
+            font_weight: nameData.font_weight || 'bold',
+            alignment: nameData.alignment || 'center',
+            letter_spacing: nameData.letter_spacing != null ? Number(nameData.letter_spacing) : 1,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'campaign_id' }
-        );
+        )
+        .select()
+        .single();
 
       if (nameErr) throw nameErr;
+      updatedName = nData;
     }
 
-    return c.json({ success: true, message: 'Campaign composition saved successfully' });
+    return c.json({
+      success: true,
+      message: 'Campaign composition saved successfully',
+      campaign: {
+        ...updatedCamp,
+        photo_config: updatedPhoto,
+        name_config: updatedName,
+      },
+    });
   } catch (err) {
     console.error('Error saving campaign composition:', err);
     return c.json({ error: err.message || 'Failed to save campaign composition' }, 500);
@@ -663,6 +735,8 @@ app.get('/campaigns/by-slug/:slug', async (c) => {
         campaign_width,
         campaign_height,
         campaign_rotation,
+        canvas_width,
+        canvas_height,
         photo_config:yogframe_campaign_photo_config(
           enabled,
           shape,
@@ -707,6 +781,8 @@ app.get('/campaigns/by-slug/:slug', async (c) => {
       campaign_width: campaign.campaign_width,
       campaign_height: campaign.campaign_height,
       campaign_rotation: campaign.campaign_rotation,
+      canvas_width: campaign.canvas_width || 1080,
+      canvas_height: campaign.canvas_height || 1350,
       photo_config: Array.isArray(campaign.photo_config)
         ? campaign.photo_config[0] || null
         : campaign.photo_config,
