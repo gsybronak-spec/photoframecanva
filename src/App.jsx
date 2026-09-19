@@ -7,6 +7,7 @@ import AnalyticsSection from './components/AnalyticsSection';
 import PreviewModal from './components/PreviewModal';
 import AdminAuthModal from './components/AdminAuthModal';
 import UserPortal from './user/UserPortal';
+import { normalizeCoord } from './utils/geoUtils';
 
 function slugify(text) {
   return text
@@ -256,6 +257,9 @@ export default function App() {
       const res = await authFetch(`/api/admin/campaigns/${id}`);
       if (res.ok) {
         const { campaign: c } = await res.json();
+        const cw = Number(c.canvas_width) || 1080;
+        const ch = Number(c.canvas_height) || 1350;
+
         setCampaign({
           id: c.id,
           name: c.name,
@@ -264,24 +268,24 @@ export default function App() {
           description: c.description || '',
           status: c.status || 'Draft',
           campaign_image_url: c.campaign_image_url || '',
-          campaign_x: c.campaign_x ?? 0,
-          campaign_y: c.campaign_y ?? 0,
-          campaign_width: c.campaign_width ?? 100,
-          campaign_height: c.campaign_height ?? 100,
-          campaign_rotation: c.campaign_rotation ?? 0,
-          canvas_width: c.canvas_width || 1080,
-          canvas_height: c.canvas_height || 1350,
+          campaign_x: normalizeCoord(c.campaign_x, cw, 0),
+          campaign_y: normalizeCoord(c.campaign_y, ch, 0),
+          campaign_width: Math.max(5, normalizeCoord(c.campaign_width, cw, 100)),
+          campaign_height: Math.max(5, normalizeCoord(c.campaign_height, ch, 100)),
+          campaign_rotation: Number(c.campaign_rotation) || 0,
+          canvas_width: cw,
+          canvas_height: ch,
         });
 
         if (c.photo_config) {
           setPhotoConfig({
             enabled: Boolean(c.photo_config.enabled),
             shape: c.photo_config.shape || 'Square',
-            x: c.photo_config.x ?? 32,
-            y: c.photo_config.y ?? 42,
-            width: c.photo_config.width ?? 35,
-            height: c.photo_config.height ?? 28,
-            rotation: c.photo_config.rotation ?? 0,
+            x: normalizeCoord(c.photo_config.x, cw, 30),
+            y: normalizeCoord(c.photo_config.y, ch, 35),
+            width: Math.max(5, normalizeCoord(c.photo_config.width, cw, 40)),
+            height: Math.max(5, normalizeCoord(c.photo_config.height, ch, 30)),
+            rotation: Number(c.photo_config.rotation) || 0,
           });
         } else {
           setPhotoConfig(DEFAULT_PHOTO_CONFIG);
@@ -290,11 +294,11 @@ export default function App() {
         if (c.name_config) {
           setNameConfig({
             enabled: Boolean(c.name_config.enabled),
-            x: c.name_config.x ?? 18,
-            y: c.name_config.y ?? 78,
-            width: c.name_config.width ?? 64,
-            height: c.name_config.height ?? 10,
-            rotation: c.name_config.rotation ?? 0,
+            x: normalizeCoord(c.name_config.x, cw, 20),
+            y: normalizeCoord(c.name_config.y, ch, 75),
+            width: Math.max(5, normalizeCoord(c.name_config.width, cw, 60)),
+            height: Math.max(3, normalizeCoord(c.name_config.height, ch, 10)),
+            rotation: Number(c.name_config.rotation) || 0,
             font_family: c.name_config.font_family || 'DM Sans',
             font_size: c.name_config.font_size || 26,
             font_color: c.name_config.font_color || '#fff8e9',
@@ -362,9 +366,16 @@ export default function App() {
 
   // Layer Creation & Removal (Only on demand)
   const handleAddPhotoArea = () => {
-    setPhotoConfig((prev) => ({ ...prev, enabled: true }));
+    setPhotoConfig((prev) => ({
+      ...prev,
+      enabled: true,
+      x: prev.x ?? 30,
+      y: prev.y ?? 35,
+      width: prev.width ?? 40,
+      height: prev.height ?? 30,
+    }));
     setActiveLayer('photo');
-    showToast('Photo Area overlay added.');
+    showToast('Photo Area overlay added to canvas.');
   };
 
   const handleRemovePhotoArea = () => {
@@ -374,9 +385,16 @@ export default function App() {
   };
 
   const handleAddNameArea = () => {
-    setNameConfig((prev) => ({ ...prev, enabled: true }));
+    setNameConfig((prev) => ({
+      ...prev,
+      enabled: true,
+      x: prev.x ?? 20,
+      y: prev.y ?? 75,
+      width: prev.width ?? 60,
+      height: prev.height ?? 10,
+    }));
     setActiveLayer('name');
-    showToast('Name Area overlay added.');
+    showToast('Name Area overlay added to canvas.');
   };
 
   const handleRemoveNameArea = () => {

@@ -4,6 +4,8 @@
  * ZERO personal photos or generated images are uploaded to any server.
  */
 
+import { normalizeCoord } from '../utils/geoUtils';
+
 const imagePromiseCache = new Map();
 
 export function loadImage(src, isArtwork = false) {
@@ -84,10 +86,10 @@ export async function compositeFinalYogFrame({
   // -----------------------------------------------------------------
   // LAYER 1: Admin Campaign Artwork (Respecting Geometry & Rotation)
   // -----------------------------------------------------------------
-  const campW = (targetWidth * (campaign.campaign_width ?? 100)) / 100;
-  const campH = (targetHeight * (campaign.campaign_height ?? 100)) / 100;
-  const campX = (targetWidth * (campaign.campaign_x ?? 0)) / 100;
-  const campY = (targetHeight * (campaign.campaign_y ?? 0)) / 100;
+  const campW = (targetWidth * normalizeCoord(campaign.campaign_width, targetWidth, 100)) / 100;
+  const campH = (targetHeight * normalizeCoord(campaign.campaign_height, targetHeight, 100)) / 100;
+  const campX = (targetWidth * normalizeCoord(campaign.campaign_x, targetWidth, 0)) / 100;
+  const campY = (targetHeight * normalizeCoord(campaign.campaign_y, targetHeight, 0)) / 100;
   const campRot = ((campaign.campaign_rotation ?? 0) * Math.PI) / 180;
 
   ctx.save();
@@ -102,10 +104,10 @@ export async function compositeFinalYogFrame({
   if (photoConfig?.enabled && userPhotoUrl) {
     const userImg = await loadImage(userPhotoUrl, false);
 
-    const pw = (targetWidth * (photoConfig.width ?? 35)) / 100;
-    const ph = (targetHeight * (photoConfig.height ?? 28)) / 100;
-    const px = (targetWidth * (photoConfig.x ?? 32)) / 100;
-    const py = (targetHeight * (photoConfig.y ?? 42)) / 100;
+    const pw = (targetWidth * normalizeCoord(photoConfig.width, targetWidth, 35)) / 100;
+    const ph = (targetHeight * normalizeCoord(photoConfig.height, targetHeight, 28)) / 100;
+    const px = (targetWidth * normalizeCoord(photoConfig.x, targetWidth, 32)) / 100;
+    const py = (targetHeight * normalizeCoord(photoConfig.y, targetHeight, 42)) / 100;
     const photoRot = ((photoConfig.rotation ?? 0) * Math.PI) / 180;
 
     ctx.save();
@@ -166,10 +168,10 @@ export async function compositeFinalYogFrame({
   // LAYER 3: User Name Overlay (Respecting Exact Typography & Rotation)
   // -----------------------------------------------------------------
   if (nameConfig?.enabled && userName) {
-    const nw = (targetWidth * (nameConfig.width ?? 64)) / 100;
-    const nh = (targetHeight * (nameConfig.height ?? 10)) / 100;
-    const nx = (targetWidth * (nameConfig.x ?? 18)) / 100;
-    const ny = (targetHeight * (nameConfig.y ?? 78)) / 100;
+    const nw = (targetWidth * normalizeCoord(nameConfig.width, targetWidth, 64)) / 100;
+    const nh = (targetHeight * normalizeCoord(nameConfig.height, targetHeight, 10)) / 100;
+    const nx = (targetWidth * normalizeCoord(nameConfig.x, targetWidth, 18)) / 100;
+    const ny = (targetHeight * normalizeCoord(nameConfig.y, targetHeight, 78)) / 100;
     const nameRot = ((nameConfig.rotation ?? 0) * Math.PI) / 180;
 
     // Scale font size proportionally from reference stage (450px) to high-res canvas
