@@ -125,30 +125,45 @@ router.get('/metrics', requireAdminAuth, async (req, res) => {
 // -------------------------------------------------------------
 router.get('/campaigns', requireAdminAuth, async (req, res) => {
   try {
-    const { status, search } = req.query;
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    const { status, district, search } = req.query;
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '25', 10)));
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
     let query = supabase
       .from('yogframe_campaigns')
-      .select(`
+      .select(
+        `
         *,
         photo_config:yogframe_campaign_photo_config(*),
         name_config:yogframe_campaign_name_config(*)
-      `)
+      `,
+        { count: 'exact' }
+      )
       .order('created_at', { ascending: false });
 
     if (status && status !== 'All') {
       query = query.eq('status', status);
     }
 
-    if (search && search.trim()) {
-      query = query.ilike('name', `%${search.trim()}%`);
+    if (district && district !== 'All') {
+      query = query.eq('district', district);
     }
 
-    const { data: campaigns, error } = await query;
+    if (search && search.trim()) {
+      const s = search.trim();
+      query = query.or(`name.ilike.%${s}%,slug.ilike.%${s}%,district.ilike.%${s}%`);
+    }
+
+    query = query.range(from, to);
+
+    const { data: campaigns, count, error } = await query;
     if (error) throw error;
 
-    // Fetch counts of frames and shares for each campaign anonymously
-    const campaignIds = campaigns.map(c => c.id);
+    const campaignList = campaigns || [];
+    const campaignIds = campaignList.map(c => c.id);
     let framesMap = {};
     let sharesMap = {};
 
@@ -169,7 +184,7 @@ router.get('/campaigns', requireAdminAuth, async (req, res) => {
       }
     }
 
-    const enriched = campaigns.map(c => ({
+    const enriched = campaignList.map(c => ({
       ...c,
       photo_config: Array.isArray(c.photo_config) ? c.photo_config[0] || null : c.photo_config,
       name_config: Array.isArray(c.name_config) ? c.name_config[0] || null : c.name_config,
@@ -177,7 +192,18 @@ router.get('/campaigns', requireAdminAuth, async (req, res) => {
       shares_count: sharesMap[c.id] || 0,
     }));
 
-    return res.json({ campaigns: enriched });
+    const total = count != null ? count : enriched.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return res.json({
+      campaigns: enriched,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (err) {
     console.error('Error listing campaigns:', err);
     return res.status(500).json({ error: err.message || 'Failed to list campaigns' });
@@ -186,7 +212,7 @@ router.get('/campaigns', requireAdminAuth, async (req, res) => {
 
 router.post('/campaigns', requireAdminAuth, async (req, res) => {
   try {
-    let { name, slug, description, status } = req.body;
+    let { name, slug, district, description, status } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Campaign name is required' });
@@ -213,22 +239,29 @@ router.post('/campaigns', requireAdminAuth, async (req, res) => {
       counter++;
     }
 
+    const insertData = {
+      name: name.trim(),
+      slug: finalSlug,
+      district: district && district.trim() ? district.trim() : null,
+      description: description?.trim() || '',
+      status: status || 'Draft',
+      campaign_image_url: req.body.campaign_image_url || '',
+      campaign_x: Number(req.body.campaign_x) || 0,
+      campaign_y: Number(req.body.campaign_y) || 0,
+      campaign_width: Number(req.body.campaign_width) || 100,
+      campaign_height: Number(req.body.campaign_height) || 100,
+      campaign_rotation: Number(req.body.campaign_rotation) || 0,
+      canvas_width: Number(req.body.canvas_width) || 1080,
+      canvas_height: Number(req.body.canvas_height) || 1350,
+    };
+
+    if (status === 'Active') {
+      insertData.activated_at = new Date().toISOString();
+    }
+
     const { data: campaign, error } = await supabase
       .from('yogframe_campaigns')
-      .insert({
-        name: name.trim(),
-        slug: finalSlug,
-        description: description?.trim() || '',
-        status: status || 'Draft',
-        campaign_image_url: req.body.campaign_image_url || '',
-        campaign_x: Number(req.body.campaign_x) || 0,
-        campaign_y: Number(req.body.campaign_y) || 0,
-        campaign_width: Number(req.body.campaign_width) || 100,
-        campaign_height: Number(req.body.campaign_height) || 100,
-        campaign_rotation: Number(req.body.campaign_rotation) || 0,
-        canvas_width: Number(req.body.canvas_width) || 1080,
-        canvas_height: Number(req.body.canvas_height) || 1350,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -306,6 +339,7 @@ router.put('/campaigns/:id', requireAdminAuth, async (req, res) => {
     const {
       name,
       slug,
+      district,
       description,
       status,
       campaign_image_url,
@@ -352,6 +386,10 @@ router.put('/campaigns/:id', requireAdminAuth, async (req, res) => {
       canvas_height: Number(req.body.canvas_height) || 1350,
       updated_at: new Date().toISOString(),
     };
+
+    if (district !== undefined) {
+      updateData.district = district && district.trim() ? district.trim() : null;
+    }
 
     if (status === 'Active') {
       const { data: current } = await supabase

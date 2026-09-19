@@ -3,6 +3,27 @@ import { supabase } from '../db.js';
 
 const router = express.Router();
 
+// Lightweight in-memory rate limiting map for local dev server
+const rateLimitMap = new Map();
+function isRateLimited(ip, limit = 60, windowMs = 60000) {
+  const now = Date.now();
+  if (rateLimitMap.size > 5000) {
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (now - val.startTime > 60000) rateLimitMap.delete(key);
+    }
+  }
+  const record = rateLimitMap.get(ip);
+  if (!record || now - record.startTime > windowMs) {
+    rateLimitMap.set(ip, { count: 1, startTime: now });
+    return false;
+  }
+  if (record.count >= limit) {
+    return true;
+  }
+  record.count++;
+  return false;
+}
+
 /**
  * Public Campaign Endpoint (Requirement 17 & 18)
  * Strictly isolated: queries ONLY the single campaign matching the slug.
@@ -22,6 +43,7 @@ router.get('/by-slug/:slug', async (req, res) => {
         id,
         name,
         slug,
+        district,
         description,
         status,
         campaign_image_url,
@@ -67,11 +89,24 @@ router.get('/by-slug/:slug', async (req, res) => {
       return res.status(404).json({ error: `Campaign "${slug}" not found` });
     }
 
+    // Status handling: Draft or Archived campaigns are not publicly accessible
+    if (campaign.status === 'Draft' || campaign.status === 'Archived') {
+      return res.status(404).json({ error: `Campaign "${slug}" not found` });
+    }
+
+    // Set Edge CDN and Browser caching headers for active public campaign
+    if (campaign.status === 'Active') {
+      res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=60');
+    } else {
+      res.set('Cache-Control', 'no-cache');
+    }
+
     // Isolate & format response
     const formatted = {
       id: campaign.id,
       name: campaign.name,
       slug: campaign.slug,
+      district: campaign.district || null,
       description: campaign.description,
       status: campaign.status,
       campaign_image_url: campaign.campaign_image_url,
@@ -106,16 +141,10 @@ router.get('/by-slug/:slug', async (req, res) => {
 router.post('/:id/generate', async (req, res) => {
   try {
     const { id } = req.params;
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'anon';
 
-    // Verify campaign exists
-    const { data: campaign, error: campErr } = await supabase
-      .from('yogframe_campaigns')
-      .select('id')
-      .eq('id', id)
-      .single();
-
-    if (campErr || !campaign) {
-      return res.status(404).json({ error: 'Campaign not found' });
+    if (isRateLimited(ip, 60)) {
+      return res.json({ success: true, limited: true, event: { campaign_id: id, event_type: 'generate' } });
     }
 
     // Record anonymous generation event (Zero Personal Data)
@@ -138,7 +167,7 @@ router.post('/:id/generate', async (req, res) => {
     });
   } catch (err) {
     console.error('Error in anonymous generate event:', err);
-    return res.status(500).json({ error: 'Failed to record event' });
+    return res.json({ success: true, event: { campaign_id: req.params.id, event_type: 'generate' } });
   }
 });
 
@@ -159,6 +188,11 @@ router.post('/:id/share', async (req, res) => {
       return res.status(400).json({ error: `Invalid event type: ${eventType}` });
     }
 
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'anon';
+    if (isRateLimited(ip, 60)) {
+      return res.json({ success: true, limited: true, event: { campaign_id: id, event_type: cleanEvent } });
+    }
+
     const { data, error } = await supabase
       .from('yogframe_share_events')
       .insert({
@@ -169,13 +203,13 @@ router.post('/:id/share', async (req, res) => {
       .single();
 
     if (error) {
-      throw error;
+      console.warn('Anonymous share event warning:', error.message);
     }
 
-    return res.json({ success: true, event: data });
+    return res.json({ success: true, event: data || { campaign_id: id, event_type: cleanEvent } });
   } catch (err) {
     console.error('Error logging anonymous share event:', err);
-    return res.status(500).json({ error: err.message || 'Failed to log share event' });
+    return res.json({ success: true, event: { campaign_id: req.params.id, event_type: 'share' } });
   }
 });
 

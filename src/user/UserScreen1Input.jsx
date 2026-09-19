@@ -82,7 +82,7 @@ export default function UserScreen1Input({
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
               <span className="inline-block rounded-md bg-[#db9b35] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[#17362f] shadow-sm">
-                Active Campaign
+                {campaign.district ? `${campaign.district} District` : 'Active Campaign'}
               </span>
               <h2 className="brand-serif mt-1 text-base sm:text-lg font-bold drop-shadow-md truncate">
                 {campaign.name}

@@ -3,19 +3,27 @@
  * Combines Layer 1 (Admin Artwork), Layer 2 (User Photo with Mask), Layer 3 (User Name with Typography)
  */
 
-export function loadImage(src, isArtwork = false) {
-  return new Promise((resolve, reject) => {
-    if (!src) {
-      const errorMsg = isArtwork
-        ? 'Campaign artwork could not be loaded. Please refresh and try again.'
-        : 'User photo could not be loaded. Please select a photo again.';
-      return reject(new Error(errorMsg));
-    }
+const imagePromiseCache = new Map();
 
+export function loadImage(src, isArtwork = false) {
+  if (!src) {
+    const errorMsg = isArtwork
+      ? 'Campaign artwork could not be loaded. Please refresh and try again.'
+      : 'User photo could not be loaded. Please select a photo again.';
+    return Promise.reject(new Error(errorMsg));
+  }
+
+  // Reuse existing promise for artwork URL to prevent duplicate network loads
+  if (isArtwork && imagePromiseCache.has(src)) {
+    return imagePromiseCache.get(src);
+  }
+
+  const promise = new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     const handleError = () => {
+      if (isArtwork) imagePromiseCache.delete(src);
       const errorMsg = isArtwork
         ? 'Campaign artwork could not be loaded. Please refresh and try again.'
         : 'User photo could not be loaded. Please select a photo again.';
@@ -39,6 +47,12 @@ export function loadImage(src, isArtwork = false) {
     img.onerror = handleError;
     img.src = src;
   });
+
+  if (isArtwork) {
+    imagePromiseCache.set(src, promise);
+  }
+
+  return promise;
 }
 
 export async function compositeFinalYogFrame({

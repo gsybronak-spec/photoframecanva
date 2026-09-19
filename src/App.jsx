@@ -24,6 +24,7 @@ const DEFAULT_CAMPAIGN = {
   id: null,
   name: '',
   slug: '',
+  district: '',
   description: '',
   status: 'Draft',
   campaign_image_url: '',
@@ -97,6 +98,17 @@ export default function App() {
   });
 
   const [campaigns, setCampaigns] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 25,
+    total: 0,
+    totalPages: 1,
+  });
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [districtFilter, setDistrictFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [campaign, setCampaign] = useState(DEFAULT_CAMPAIGN);
   const [photoConfig, setPhotoConfig] = useState(DEFAULT_PHOTO_CONFIG);
   const [nameConfig, setNameConfig] = useState(DEFAULT_NAME_CONFIG);
@@ -160,34 +172,83 @@ export default function App() {
     checkAuth();
   }, [authToken]);
 
-  // Load Data after Authentication
-  const loadDashboardData = useCallback(async () => {
-    if (!isAuthenticated) return;
-    try {
-      const [metricsRes, campsRes] = await Promise.all([
-        authFetch('/api/admin/metrics'),
-        authFetch('/api/admin/campaigns'),
-      ]);
+  // Load Data after Authentication with Pagination and Filters
+  const loadDashboardData = useCallback(
+    async (overrides = {}) => {
+      if (!isAuthenticated) return;
+      try {
+        const curPage = overrides.page !== undefined ? overrides.page : page;
+        const curStatus = overrides.status !== undefined ? overrides.status : statusFilter;
+        const curDistrict = overrides.district !== undefined ? overrides.district : districtFilter;
+        const curSearch = overrides.search !== undefined ? overrides.search : searchQuery;
 
-      if (metricsRes.ok) {
-        const mData = await metricsRes.json();
-        setMetrics(mData);
-      }
+        const params = new URLSearchParams({
+          page: String(curPage),
+          limit: '25',
+        });
+        if (curStatus && curStatus !== 'All') params.set('status', curStatus);
+        if (curDistrict && curDistrict !== 'All') params.set('district', curDistrict);
+        if (curSearch && curSearch.trim()) params.set('search', curSearch.trim());
 
-      if (campsRes.ok) {
-        const cData = await campsRes.json();
-        setCampaigns(cData.campaigns || []);
+        const [metricsRes, campsRes] = await Promise.all([
+          authFetch('/api/admin/metrics'),
+          authFetch(`/api/admin/campaigns?${params.toString()}`),
+        ]);
+
+        if (metricsRes.ok) {
+          const mData = await metricsRes.json();
+          setMetrics(mData);
+        }
+
+        if (campsRes.ok) {
+          const cData = await campsRes.json();
+          setCampaigns(cData.campaigns || []);
+          if (cData.pagination) {
+            setPagination(cData.pagination);
+          } else {
+            setPagination({
+              page: curPage,
+              limit: 25,
+              total: (cData.campaigns || []).length,
+              totalPages: Math.ceil(((cData.campaigns || []).length) / 25) || 1,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
       }
-    } catch (err) {
-      console.error('Error loading dashboard data:', err);
-    }
-  }, [isAuthenticated, authFetch]);
+    },
+    [isAuthenticated, authFetch, page, statusFilter, districtFilter, searchQuery]
+  );
 
   useEffect(() => {
     if (isAuthenticated) {
       loadDashboardData();
     }
   }, [isAuthenticated, loadDashboardData]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    loadDashboardData({ page: newPage });
+  };
+
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setPage(1);
+    loadDashboardData({ status: newStatus, page: 1 });
+  };
+
+  const handleDistrictFilterChange = (newDistrict) => {
+    setDistrictFilter(newDistrict);
+    setPage(1);
+    loadDashboardData({ district: newDistrict, page: 1 });
+  };
+
+  const handleSearchChange = (newSearch) => {
+    setSearchQuery(newSearch);
+    setPage(1);
+    loadDashboardData({ search: newSearch, page: 1 });
+  };
 
   // Campaign Selection (Load into Studio)
   const handleSelectCampaign = async (id) => {
@@ -199,6 +260,7 @@ export default function App() {
           id: c.id,
           name: c.name,
           slug: c.slug,
+          district: c.district || '',
           description: c.description || '',
           status: c.status || 'Draft',
           campaign_image_url: c.campaign_image_url || '',
@@ -426,6 +488,7 @@ export default function App() {
       const savePayload = {
         name: campaign.name,
         slug: campaign.slug,
+        district: campaign.district && campaign.district.trim() ? campaign.district.trim() : null,
         description: campaign.description,
         status: campaign.status,
         campaign_image_url: campaign.campaign_image_url,
@@ -474,6 +537,7 @@ export default function App() {
         ...prev,
         id: targetId,
         slug: savedSlug,
+        district: savedCampaign.district !== undefined ? (savedCampaign.district || '') : prev.district,
         canvas_width: savedCampaign.canvas_width || prev.canvas_width || 1080,
         canvas_height: savedCampaign.canvas_height || prev.canvas_height || 1350,
         campaign_image_url: savedCampaign.campaign_image_url || prev.campaign_image_url,
@@ -636,6 +700,14 @@ export default function App() {
           onDeleteCampaign={handleDeleteCampaign}
           onPreviewCampaign={handleOpenPreview}
           onToast={showToast}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          search={searchQuery}
+          onSearchChange={handleSearchChange}
+          statusFilter={statusFilter}
+          onStatusFilterChange={handleStatusFilterChange}
+          districtFilter={districtFilter}
+          onDistrictFilterChange={handleDistrictFilterChange}
         />
       </main>
 

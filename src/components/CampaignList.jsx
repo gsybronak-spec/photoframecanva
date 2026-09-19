@@ -15,7 +15,11 @@ import {
   Share2,
   ExternalLink,
   Plus,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import { GUJARAT_DISTRICTS } from '../utils/gujaratDistricts';
 
 export default function CampaignList({
   campaigns = [],
@@ -26,18 +30,52 @@ export default function CampaignList({
   onDeleteCampaign,
   onPreviewCampaign,
   onToast,
+  pagination = { page: 1, limit: 25, total: 0, totalPages: 1 },
+  onPageChange,
+  search: controlledSearch,
+  onSearchChange,
+  statusFilter: controlledStatus,
+  onStatusFilterChange,
+  districtFilter: controlledDistrict,
+  onDistrictFilterChange,
 }) {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [localSearch, setLocalSearch] = useState('');
+  const [localStatus, setLocalStatus] = useState('All');
+  const [localDistrict, setLocalDistrict] = useState('All');
   const [copiedId, setCopiedId] = useState(null);
 
-  const filteredCampaigns = campaigns.filter((c) => {
-    const matchesSearch =
-      (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.slug || '').toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const search = controlledSearch !== undefined ? controlledSearch : localSearch;
+  const statusFilter = controlledStatus !== undefined ? controlledStatus : localStatus;
+  const districtFilter = controlledDistrict !== undefined ? controlledDistrict : localDistrict;
+
+  const handleSearchChange = (val) => {
+    if (onSearchChange) onSearchChange(val);
+    else setLocalSearch(val);
+  };
+
+  const handleStatusChange = (val) => {
+    if (onStatusFilterChange) onStatusFilterChange(val);
+    else setLocalStatus(val);
+  };
+
+  const handleDistrictChange = (val) => {
+    if (onDistrictFilterChange) onDistrictFilterChange(val);
+    else setLocalDistrict(val);
+  };
+
+  // If server-side pagination is active, campaigns array is already filtered & paginated.
+  // Otherwise, apply client-side filtering fallback.
+  const displayCampaigns = onPageChange
+    ? campaigns
+    : campaigns.filter((c) => {
+        const matchesSearch =
+          (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+          (c.slug || '').toLowerCase().includes(search.toLowerCase()) ||
+          (c.district || '').toLowerCase().includes(search.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
+        const matchesDistrict = districtFilter === 'All' || c.district === districtFilter;
+        return matchesSearch && matchesStatus && matchesDistrict;
+      });
 
   const handleCopyLink = (campaign) => {
     const fullUrl = `${window.location.origin}/campaign/${campaign.slug}`;
@@ -62,6 +100,8 @@ export default function CampaignList({
     }
   };
 
+  const totalCount = pagination?.total != null ? pagination.total : campaigns.length;
+
   return (
     <section className="mt-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -70,7 +110,7 @@ export default function CampaignList({
             MULTI-CAMPAIGN PORTFOLIO
           </p>
           <h2 className="brand-serif mt-1 text-2xl sm:text-3xl font-bold text-[#17362f]">
-            All Campaign Frames ({campaigns.length})
+            All Campaign Frames ({totalCount})
           </h2>
         </div>
 
@@ -83,50 +123,70 @@ export default function CampaignList({
         </button>
       </div>
 
-      {/* Search & Status Filters */}
-      <div className="mt-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Search & Filters Toolbar */}
+      <div className="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search campaigns by name or slug..."
+            placeholder="Search campaigns by name, slug, or district..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full rounded-xl border border-[#e5dccd] bg-white py-2.5 pl-10 pr-4 text-xs sm:text-sm text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20 shadow-sm"
           />
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-1 shadow-sm">
-          {['All', 'Active', 'Draft', 'Paused', 'Archived'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                statusFilter === status
-                  ? 'bg-[#1f4a3f] text-white shadow-sm'
-                  : 'text-[#52665e] hover:text-[#17362f]'
-              }`}
+        {/* District & Status Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* District Dropdown Filter */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-[#e8dfcf] bg-white px-3 py-1.5 shadow-sm">
+            <MapPin className="h-3.5 w-3.5 text-[#db9b35]" />
+            <select
+              value={districtFilter}
+              onChange={(e) => handleDistrictChange(e.target.value)}
+              className="bg-transparent text-xs font-bold text-[#17362f] focus:outline-none cursor-pointer"
             >
-              {status}
-            </button>
-          ))}
+              <option value="All">All Gujarat Districts</option>
+              {GUJARAT_DISTRICTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-1 shadow-sm">
+            {['All', 'Active', 'Draft', 'Paused', 'Archived'].map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(status)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                  statusFilter === status
+                    ? 'bg-[#1f4a3f] text-white shadow-sm'
+                    : 'text-[#52665e] hover:text-[#17362f]'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Campaign Cards Grid */}
-      {filteredCampaigns.length === 0 ? (
+      {displayCampaigns.length === 0 ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-[#e8dfcf] bg-white p-8 sm:p-12 text-center">
           <p className="text-sm font-semibold text-[#52665e]">
-            {search || statusFilter !== 'All'
+            {search || statusFilter !== 'All' || districtFilter !== 'All'
               ? 'No campaigns match your search or filter.'
               : 'No campaigns created yet. Click "Create New Campaign" to start!'}
           </p>
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredCampaigns.map((camp) => {
+          {displayCampaigns.map((camp) => {
             const isSelected = selectedCampaignId === camp.id;
             const createdDate = new Date(camp.created_at).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -144,15 +204,24 @@ export default function CampaignList({
                 }`}
               >
                 <div>
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-2">
-                    <span
-                      className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(
-                        camp.status
-                      )}`}
-                    >
-                      {camp.status}
-                    </span>
+                  {/* Card Header with Status & District Badges */}
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span
+                        className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(
+                          camp.status
+                        )}`}
+                      >
+                        {camp.status}
+                      </span>
+
+                      {camp.district && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#d8d0c2] bg-[#f5ede0] px-2.5 py-0.5 text-[10px] font-bold text-[#1f4a3f]">
+                          <MapPin className="h-2.5 w-2.5 text-[#db9b35]" />
+                          <span>{camp.district}</span>
+                        </span>
+                      )}
+                    </div>
 
                     <span className="flex items-center gap-1 text-[11px] text-[#79987e] font-medium">
                       <Calendar className="h-3 w-3" />
@@ -303,6 +372,49 @@ export default function CampaignList({
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination Footer */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[#e8dfcf] pt-4">
+          <p className="text-xs font-medium text-[#52665e]">
+            Showing{' '}
+            <span className="font-bold text-[#17362f]">
+              {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}
+            </span>{' '}
+            to{' '}
+            <span className="font-bold text-[#17362f]">
+              {Math.min(pagination.page * pagination.limit, pagination.total)}
+            </span>{' '}
+            of <span className="font-bold text-[#17362f]">{pagination.total}</span> campaigns
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={pagination.page <= 1}
+              onClick={() => onPageChange && onPageChange(pagination.page - 1)}
+              className="inline-flex items-center gap-1 rounded-xl border border-[#e5dccd] bg-white px-3 py-1.5 text-xs font-bold text-[#17362f] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faf6ed] transition-colors shadow-sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous</span>
+            </button>
+
+            <span className="text-xs font-bold text-[#1f4a3f] px-2">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+
+            <button
+              type="button"
+              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => onPageChange && onPageChange(pagination.page + 1)}
+              className="inline-flex items-center gap-1 rounded-xl border border-[#e5dccd] bg-white px-3 py-1.5 text-xs font-bold text-[#17362f] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faf6ed] transition-colors shadow-sm"
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
     </section>

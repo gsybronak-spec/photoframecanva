@@ -207,36 +207,74 @@ app.get('/admin/metrics', requireAdminAuth, async (c) => {
   }
 });
 
+// Lightweight in-memory rate limiting map for edge functions
+const rateLimitMap = new Map();
+function isRateLimited(ip, limit = 60, windowMs = 60000) {
+  const now = Date.now();
+  if (rateLimitMap.size > 5000) {
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (now - val.startTime > 60000) rateLimitMap.delete(key);
+    }
+  }
+  const record = rateLimitMap.get(ip);
+  if (!record || now - record.startTime > windowMs) {
+    rateLimitMap.set(ip, { count: 1, startTime: now });
+    return false;
+  }
+  if (record.count >= limit) {
+    return true;
+  }
+  record.count++;
+  return false;
+}
+
 // -------------------------------------------------------------
 // Admin Campaign Management Endpoints
 // -------------------------------------------------------------
 app.get('/admin/campaigns', requireAdminAuth, async (c) => {
   try {
+    c.header('Cache-Control', 'no-store, no-cache, must-revalidate');
     const supabase = getSupabase(c);
     const status = c.req.query('status');
+    const district = c.req.query('district');
     const search = c.req.query('search');
+    const page = Math.max(1, parseInt(c.req.query('page') || '1', 10));
+    const limit = Math.max(1, Math.min(100, parseInt(c.req.query('limit') || '25', 10)));
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
     let query = supabase
       .from('yogframe_campaigns')
-      .select(`
+      .select(
+        `
         *,
         photo_config:yogframe_campaign_photo_config(*),
         name_config:yogframe_campaign_name_config(*)
-      `)
+      `,
+        { count: 'exact' }
+      )
       .order('created_at', { ascending: false });
 
     if (status && status !== 'All') {
       query = query.eq('status', status);
     }
 
-    if (search && search.trim()) {
-      query = query.ilike('name', `%${search.trim()}%`);
+    if (district && district !== 'All') {
+      query = query.eq('district', district);
     }
 
-    const { data: campaigns, error } = await query;
+    if (search && search.trim()) {
+      const s = search.trim();
+      query = query.or(`name.ilike.%${s}%,slug.ilike.%${s}%,district.ilike.%${s}%`);
+    }
+
+    query = query.range(from, to);
+
+    const { data: campaigns, count, error } = await query;
     if (error) throw error;
 
-    const campaignIds = campaigns.map((camp) => camp.id);
+    const campaignList = campaigns || [];
+    const campaignIds = campaignList.map((camp) => camp.id);
     let framesMap = {};
     let sharesMap = {};
 
@@ -257,7 +295,7 @@ app.get('/admin/campaigns', requireAdminAuth, async (c) => {
       }
     }
 
-    const enrichedCampaigns = campaigns.map((camp) => ({
+    const enrichedCampaigns = campaignList.map((camp) => ({
       ...camp,
       photo_config: Array.isArray(camp.photo_config)
         ? camp.photo_config[0] || null
@@ -269,7 +307,18 @@ app.get('/admin/campaigns', requireAdminAuth, async (c) => {
       shares_count: sharesMap[camp.id] || 0,
     }));
 
-    return c.json({ campaigns: enrichedCampaigns });
+    const total = count != null ? count : enrichedCampaigns.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return c.json({
+      campaigns: enrichedCampaigns,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (err) {
     console.error('Error fetching campaigns list:', err);
     return c.json({ error: err.message || 'Failed to fetch campaigns' }, 500);
@@ -287,6 +336,7 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
     const {
       name,
       slug,
+      district,
       description,
       status = 'Draft',
       campaign_image_url,
@@ -319,22 +369,29 @@ app.post('/admin/campaigns', requireAdminAuth, async (c) => {
       counter++;
     }
 
+    const newCampaignData = {
+      name: name.trim(),
+      slug: uniqueSlug,
+      district: district && district.trim() ? district.trim() : null,
+      description: description ? description.trim() : null,
+      status,
+      campaign_image_url: campaign_image_url || null,
+      campaign_x,
+      campaign_y,
+      campaign_width,
+      campaign_height,
+      campaign_rotation,
+      canvas_width: Number(canvas_width) || 1080,
+      canvas_height: Number(canvas_height) || 1350,
+    };
+
+    if (status === 'Active') {
+      newCampaignData.activated_at = new Date().toISOString();
+    }
+
     const { data: campaign, error: campErr } = await supabase
       .from('yogframe_campaigns')
-      .insert({
-        name: name.trim(),
-        slug: uniqueSlug,
-        description: description ? description.trim() : null,
-        status,
-        campaign_image_url: campaign_image_url || null,
-        campaign_x,
-        campaign_y,
-        campaign_width,
-        campaign_height,
-        campaign_rotation,
-        canvas_width: Number(canvas_width) || 1080,
-        canvas_height: Number(canvas_height) || 1350,
-      })
+      .insert(newCampaignData)
       .select()
       .single();
 
@@ -475,8 +532,14 @@ app.put('/admin/campaigns/:id', requireAdminAuth, async (c) => {
 
     if (campData.name !== undefined) campaignUpdates.name = campData.name.trim();
     if (finalSlug !== undefined) campaignUpdates.slug = finalSlug;
+    if (campData.district !== undefined) campaignUpdates.district = campData.district && campData.district.trim() ? campData.district.trim() : null;
     if (campData.description !== undefined) campaignUpdates.description = campData.description ? campData.description.trim() : null;
-    if (campData.status !== undefined) campaignUpdates.status = campData.status;
+    if (campData.status !== undefined) {
+      campaignUpdates.status = campData.status;
+      if (campData.status === 'Active') {
+        campaignUpdates.activated_at = new Date().toISOString();
+      }
+    }
     if (campData.campaign_image_url !== undefined) campaignUpdates.campaign_image_url = campData.campaign_image_url;
     if (campData.campaign_x !== undefined) campaignUpdates.campaign_x = campData.campaign_x;
     if (campData.campaign_y !== undefined) campaignUpdates.campaign_y = campData.campaign_y;
@@ -727,6 +790,7 @@ app.get('/campaigns/by-slug/:slug', async (c) => {
         id,
         name,
         slug,
+        district,
         description,
         status,
         campaign_image_url,
@@ -769,10 +833,23 @@ app.get('/campaigns/by-slug/:slug', async (c) => {
       return c.json({ error: `Campaign "${slug}" not found` }, 404);
     }
 
+    // Status handling: Draft or Archived campaigns are not publicly accessible
+    if (campaign.status === 'Draft' || campaign.status === 'Archived') {
+      return c.json({ error: `Campaign "${slug}" not found` }, 404);
+    }
+
+    // Set Edge CDN and Browser caching headers for active public campaign
+    if (campaign.status === 'Active') {
+      c.header('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=60');
+    } else {
+      c.header('Cache-Control', 'no-cache');
+    }
+
     const formatted = {
       id: campaign.id,
       name: campaign.name,
       slug: campaign.slug,
+      district: campaign.district || null,
       description: campaign.description,
       status: campaign.status,
       campaign_image_url: campaign.campaign_image_url,
@@ -801,18 +878,23 @@ app.get('/campaigns/by-slug/:slug', async (c) => {
 app.post('/campaigns/:id/generate', async (c) => {
   try {
     const id = c.req.param('id');
-    const supabase = getSupabase(c);
+    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'anon';
 
-    const { data: campaign, error: campErr } = await supabase
-      .from('yogframe_campaigns')
-      .select('id')
-      .eq('id', id)
-      .single();
-
-    if (campErr || !campaign) {
-      return c.json({ error: 'Campaign not found' }, 404);
+    // Edge rate limiting: max 60 generation events per minute per IP
+    if (isRateLimited(ip, 60)) {
+      return c.json(
+        {
+          success: true,
+          limited: true,
+          event: { campaign_id: id, event_type: 'generate' },
+        },
+        200
+      );
     }
 
+    const supabase = getSupabase(c);
+
+    // Non-blocking best-effort insert
     const { data, error } = await supabase
       .from('yogframe_share_events')
       .insert({
@@ -835,7 +917,7 @@ app.post('/campaigns/:id/generate', async (c) => {
     );
   } catch (err) {
     console.error('Error in anonymous generate event:', err);
-    return c.json({ error: 'Failed to record event' }, 500);
+    return c.json({ success: true, event: { campaign_id: c.req.param('id'), event_type: 'generate' } }, 200);
   }
 });
 
@@ -852,6 +934,11 @@ app.post('/campaigns/:id/share', async (c) => {
       return c.json({ error: `Invalid event type: ${eventType}` }, 400);
     }
 
+    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'anon';
+    if (isRateLimited(ip, 60)) {
+      return c.json({ success: true, limited: true, event: { campaign_id: id, event_type: cleanEvent } }, 200);
+    }
+
     const supabase = getSupabase(c);
     const { data, error } = await supabase
       .from('yogframe_share_events')
@@ -862,12 +949,14 @@ app.post('/campaigns/:id/share', async (c) => {
       .select('id, campaign_id, event_type, created_at')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Anonymous share event warning:', error.message);
+    }
 
-    return c.json({ success: true, event: data });
+    return c.json({ success: true, event: data || { campaign_id: id, event_type: cleanEvent } });
   } catch (err) {
     console.error('Error logging anonymous share event:', err);
-    return c.json({ error: err.message || 'Failed to log share event' }, 500);
+    return c.json({ success: true, event: { campaign_id: c.req.param('id'), event_type: 'share' } }, 200);
   }
 });
 

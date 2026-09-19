@@ -3,6 +3,7 @@ import { Eye, EyeOff, Save, RefreshCw, Link as LinkIcon, AlertCircle, CheckCircl
 import CanvasStage from './CanvasStage';
 import EditorSidebar from './EditorSidebar';
 import { PRESET_CATEGORIES, SIZE_PRESETS, findMatchingPreset } from '../utils/sizePresets';
+import { GUJARAT_DISTRICTS } from '../utils/gujaratDistricts';
 
 export default function CampaignEditor({
   campaign,
@@ -49,7 +50,7 @@ export default function CampaignEditor({
 
       <form id="campaign-form" onSubmit={handleSubmit} className="soft-card mt-5 rounded-[26px] bg-white p-4 sm:p-7 shadow-sm">
         {/* Campaign Info Fields */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Campaign Name */}
           <div className="sm:col-span-1">
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#52665e]" htmlFor="campaign-name">
@@ -58,7 +59,7 @@ export default function CampaignEditor({
             <input
               id="campaign-name"
               required
-              placeholder="e.g. International Yoga Day 2026"
+              placeholder="e.g. Ahmedabad Sunset Yogotsav"
               className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-medium text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
               value={campaign.name || ''}
               onChange={(e) => onUpdateCampaignField('name', e.target.value)}
@@ -74,12 +75,32 @@ export default function CampaignEditor({
               <input
                 id="campaign-slug"
                 required
-                placeholder="e.g. international-yoga-day-2026"
+                placeholder="e.g. ahmedabad-sunset-yogotsav"
                 className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-mono text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
                 value={campaign.slug || ''}
                 onChange={(e) => onUpdateCampaignField('slug', e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Gujarat District */}
+          <div className="sm:col-span-1">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#52665e]" htmlFor="campaign-district">
+              Gujarat District
+            </label>
+            <select
+              id="campaign-district"
+              className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-semibold text-[#17362f] focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+              value={campaign.district || ''}
+              onChange={(e) => onUpdateCampaignField('district', e.target.value)}
+            >
+              <option value="">All Gujarat (Statewide)</option>
+              {GUJARAT_DISTRICTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Status */}
