@@ -88,17 +88,28 @@ app.get('/campaign/:slug', async (req, res, next) => {
         artworkUrl ? `    <meta property="og:image" content="${escapeHtml(artworkUrl)}" />` : '',
         artworkUrl ? `    <meta property="og:image:secure_url" content="${escapeHtml(artworkUrl)}" />` : '',
         artworkUrl ? `    <meta property="og:image:type" content="${imageType}" />` : '',
+        `    <meta property="og:image:width" content="1080" />`,
+        `    <meta property="og:image:height" content="1080" />`,
         `    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
         `    <meta property="og:type" content="website" />`,
         `    <meta name="twitter:card" content="summary_large_image" />`,
         `    <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />`,
         `    <meta name="twitter:description" content="${escapeHtml(pageDesc)}" />`,
         artworkUrl ? `    <meta name="twitter:image" content="${escapeHtml(artworkUrl)}" />` : '',
+        artworkUrl ? `    <link rel="apple-touch-icon" href="${escapeHtml(artworkUrl)}" />` : '',
       ].filter(Boolean).join('\n');
 
-      let html = htmlTemplate.replace(/<title>.*?<\/title>/i, '');
-      html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, '');
-      html = html.replace('</head>', `${metaTags}\n  </head>`);
+      let html = htmlTemplate;
+      html = html.replace(/<title>.*?<\/title>/gi, '');
+      html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
+      html = html.replace(/<link\s+rel=["']apple-touch-icon["'][^>]*>/gi, '');
+
+      if (/<meta\s+charset=[^>]*>/i.test(html)) {
+        html = html.replace(/(<meta\s+charset=[^>]*>)/i, `$1\n${metaTags}`);
+      } else {
+        html = html.replace(/<head>/i, `<head>\n${metaTags}`);
+      }
+
 
       if (campaign.status === 'Active') {
         res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=60');

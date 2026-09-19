@@ -95,18 +95,28 @@ export async function onRequest(context) {
       artworkUrl ? `    <meta property="og:image" content="${escapeHtml(artworkUrl)}" />` : '',
       artworkUrl ? `    <meta property="og:image:secure_url" content="${escapeHtml(artworkUrl)}" />` : '',
       artworkUrl ? `    <meta property="og:image:type" content="${imageType}" />` : '',
+      `    <meta property="og:image:width" content="1080" />`,
+      `    <meta property="og:image:height" content="1080" />`,
       `    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
       `    <meta property="og:type" content="website" />`,
       `    <meta name="twitter:card" content="summary_large_image" />`,
       `    <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />`,
       `    <meta name="twitter:description" content="${escapeHtml(pageDesc)}" />`,
       artworkUrl ? `    <meta name="twitter:image" content="${escapeHtml(artworkUrl)}" />` : '',
+      artworkUrl ? `    <link rel="apple-touch-icon" href="${escapeHtml(artworkUrl)}" />` : '',
     ].filter(Boolean).join('\n');
 
-    // Remove static default title and description from template
-    html = html.replace(/<title>.*?<\/title>/i, '');
-    html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, '');
-    html = html.replace('</head>', `${metaTags}\n  </head>`);
+    // Remove static default title, description, and apple-touch-icon from template
+    html = html.replace(/<title>.*?<\/title>/gi, '');
+    html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
+    html = html.replace(/<link\s+rel=["']apple-touch-icon["'][^>]*>/gi, '');
+
+    // Inject meta tags right at the top of <head> after charset for maximum crawler priority
+    if (/<meta\s+charset=[^>]*>/i.test(html)) {
+      html = html.replace(/(<meta\s+charset=[^>]*>)/i, `$1\n${metaTags}`);
+    } else {
+      html = html.replace(/<head>/i, `<head>\n${metaTags}`);
+    }
 
     const headers = new Headers(assetRes.headers);
     headers.set('Content-Type', 'text/html; charset=utf-8');
