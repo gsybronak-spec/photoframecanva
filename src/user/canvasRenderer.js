@@ -80,26 +80,13 @@ export async function compositeFinalYogFrame({
   const ctx = canvas.getContext('2d');
 
   // Fill background
+  ctx.clearRect(0, 0, targetWidth, targetHeight);
   ctx.fillStyle = '#faf6ed';
   ctx.fillRect(0, 0, targetWidth, targetHeight);
 
   // -----------------------------------------------------------------
-  // LAYER 1: Admin Campaign Artwork (Respecting Geometry & Rotation)
-  // -----------------------------------------------------------------
-  const campW = (targetWidth * normalizeCoord(campaign.campaign_width, targetWidth, 100)) / 100;
-  const campH = (targetHeight * normalizeCoord(campaign.campaign_height, targetHeight, 100)) / 100;
-  const campX = (targetWidth * normalizeCoord(campaign.campaign_x, targetWidth, 0)) / 100;
-  const campY = (targetHeight * normalizeCoord(campaign.campaign_y, targetHeight, 0)) / 100;
-  const campRot = ((campaign.campaign_rotation ?? 0) * Math.PI) / 180;
-
-  ctx.save();
-  ctx.translate(campX + campW / 2, campY + campH / 2);
-  if (campRot !== 0) ctx.rotate(campRot);
-  ctx.drawImage(artworkImg, -campW / 2, -campH / 2, campW, campH);
-  ctx.restore();
-
-  // -----------------------------------------------------------------
-  // LAYER 2: User Photo Mask & Adjustment (Respecting Photo Geometry)
+  // LAYER 1: User Photo Mask & Adjustment (BEHIND Frame Artwork)
+  // Drawn first so it appears behind the transparent campaign artwork
   // -----------------------------------------------------------------
   if (photoConfig?.enabled && userPhotoUrl) {
     const userImg = await loadImage(userPhotoUrl, false);
@@ -163,6 +150,23 @@ export async function compositeFinalYogFrame({
 
     ctx.restore();
   }
+
+  // -----------------------------------------------------------------
+  // LAYER 2: Admin Campaign Artwork PNG (ABOVE User Photo)
+  // Transparent areas in PNG reveal user photo underneath;
+  // all opaque decorations, borders, and logos remain above the photo.
+  // -----------------------------------------------------------------
+  const campW = (targetWidth * normalizeCoord(campaign.campaign_width, targetWidth, 100)) / 100;
+  const campH = (targetHeight * normalizeCoord(campaign.campaign_height, targetHeight, 100)) / 100;
+  const campX = (targetWidth * normalizeCoord(campaign.campaign_x, targetWidth, 0)) / 100;
+  const campY = (targetHeight * normalizeCoord(campaign.campaign_y, targetHeight, 0)) / 100;
+  const campRot = ((campaign.campaign_rotation ?? 0) * Math.PI) / 180;
+
+  ctx.save();
+  ctx.translate(campX + campW / 2, campY + campH / 2);
+  if (campRot !== 0) ctx.rotate(campRot);
+  ctx.drawImage(artworkImg, -campW / 2, -campH / 2, campW, campH);
+  ctx.restore();
 
   // -----------------------------------------------------------------
   // LAYER 3: User Name Overlay (Respecting Exact Typography & Rotation)

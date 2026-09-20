@@ -65,32 +65,7 @@ export default function PreviewModal({ campaign, photoConfig, nameConfig, onClos
               maxHeight: '68vh',
             }}
           >
-            {/* Layer 1: Base Artwork */}
-            {campaign.campaign_image_url ? (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `${campGeo.x}%`,
-                  top: `${campGeo.y}%`,
-                  width: `${campGeo.w}%`,
-                  height: `${campGeo.h}%`,
-                  transform: `rotate(${campGeo.rot}deg)`,
-                  transformOrigin: 'center center',
-                }}
-              >
-                <img
-                  src={campaign.campaign_image_url}
-                  alt={campaign.name}
-                  className="w-full h-full object-fill pointer-events-none"
-                />
-              </div>
-            ) : (
-              <div className="grid h-full place-items-center text-xs text-gray-500">
-                No artwork uploaded
-              </div>
-            )}
-
-            {/* Layer 2: Photo Area Mask */}
+            {/* Layer 1: Photo Area Placeholder (Underneath Frame Artwork) */}
             {photoConfig?.enabled && (
               <div
                 style={{
@@ -101,6 +76,7 @@ export default function PreviewModal({ campaign, photoConfig, nameConfig, onClos
                   height: `${photoGeo.h}%`,
                   transform: `rotate(${photoGeo.rot}deg)`,
                   transformOrigin: 'center center',
+                  zIndex: 2,
                 }}
               >
                 <div
@@ -117,6 +93,33 @@ export default function PreviewModal({ campaign, photoConfig, nameConfig, onClos
                     User Photo
                   </span>
                 </div>
+              </div>
+            )}
+
+            {/* Layer 2: Base Artwork PNG (Above Photo Area) */}
+            {campaign.campaign_image_url ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${campGeo.x}%`,
+                  top: `${campGeo.y}%`,
+                  width: `${campGeo.w}%`,
+                  height: `${campGeo.h}%`,
+                  transform: `rotate(${campGeo.rot}deg)`,
+                  transformOrigin: 'center center',
+                  zIndex: 5,
+                  pointerEvents: 'none',
+                }}
+              >
+                <img
+                  src={campaign.campaign_image_url}
+                  alt={campaign.name}
+                  className="w-full h-full object-fill pointer-events-none"
+                />
+              </div>
+            ) : (
+              <div className="grid h-full place-items-center text-xs text-gray-500 z-10">
+                No artwork uploaded
               </div>
             )}
 

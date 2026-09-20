@@ -368,34 +368,7 @@ export default function UserScreen2Adjust({
             margin: '0 auto',
           }}
         >
-          {/* LAYER 1: Admin Campaign Artwork (Exact Saved Coordinates & Rotation) */}
-          <div
-            style={{
-              position: 'absolute',
-              left: `${campGeo.x}%`,
-              top: `${campGeo.y}%`,
-              width: `${campGeo.w}%`,
-              height: `${campGeo.h}%`,
-              transform: `rotate(${campGeo.rot}deg)`,
-              transformOrigin: 'center center',
-              zIndex: 2,
-            }}
-          >
-            <img
-              src={campaign.campaign_image_url}
-              alt={campaign.name}
-              crossOrigin="anonymous"
-              className="w-full h-full object-fill pointer-events-none"
-              draggable={false}
-              onError={() =>
-                setArtworkError(
-                  'Campaign artwork could not be loaded. Please refresh and try again.'
-                )
-              }
-            />
-          </div>
-
-          {/* LAYER 2: Photo Area Mask (Admin Shape & Position) */}
+          {/* LAYER 1: Photo Area Mask (Admin Shape & Position) - BEHIND Frame Artwork */}
           {photoConfig?.enabled && (
             <div
               style={{
@@ -406,7 +379,7 @@ export default function UserScreen2Adjust({
                 height: `${photoGeo.h}%`,
                 transform: `rotate(${photoGeo.rot}deg)`,
                 transformOrigin: 'center center',
-                zIndex: 5,
+                zIndex: 2,
               }}
             >
               {/* The Mask Container */}
@@ -475,6 +448,34 @@ export default function UserScreen2Adjust({
               </div>
             </div>
           )}
+
+          {/* LAYER 2: Admin Campaign Artwork PNG (ABOVE User Photo) */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `${campGeo.x}%`,
+              top: `${campGeo.y}%`,
+              width: `${campGeo.w}%`,
+              height: `${campGeo.h}%`,
+              transform: `rotate(${campGeo.rot}deg)`,
+              transformOrigin: 'center center',
+              zIndex: 5,
+              pointerEvents: 'none',
+            }}
+          >
+            <img
+              src={campaign.campaign_image_url}
+              alt={campaign.name}
+              crossOrigin="anonymous"
+              className="w-full h-full object-fill pointer-events-none"
+              draggable={false}
+              onError={() =>
+                setArtworkError(
+                  'Campaign artwork could not be loaded. Please refresh and try again.'
+                )
+              }
+            />
+          </div>
 
           {/* LAYER 3: Name Area Overlay (Admin Typography & Geometry) */}
           {nameConfig?.enabled && (

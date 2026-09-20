@@ -329,15 +329,25 @@ body {
   display: none !important;
 }
 
-.preview-mode #photo-layer .photo-placeholder {
-  border: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: none !important;
+.preview-mode #photo-layer {
+  z-index: 10 !important;
+}
+
+.preview-mode #campaign-layer {
+  z-index: 20 !important;
+  pointer-events: none !important;
 }
 
 .preview-mode #name-layer {
+  z-index: 30 !important;
   border: none !important;
   background: transparent !important;
+  box-shadow: none !important;
+}
+
+.preview-mode #photo-layer .photo-placeholder {
+  border: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
   box-shadow: none !important;
 }
 
