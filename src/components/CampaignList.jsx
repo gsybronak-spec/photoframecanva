@@ -263,21 +263,29 @@ export default function CampaignList({
                   </div>
 
                   {/* Stats Bar */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-[#faf6ed] p-2 text-center border border-[#e8dfcf]">
+                  <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl bg-[#faf6ed] p-2 text-center border border-[#e8dfcf]">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[#52665e]">
-                        Frames
+                        Generated
                       </p>
-                      <p className="font-mono text-sm font-extrabold text-[#17362f]">
-                        {camp.frames_count ?? 0}
+                      <p className="font-mono text-xs sm:text-sm font-extrabold text-[#17362f]">
+                        {(camp.frames_count ?? 0).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#52665e]">
+                        Downloads
+                      </p>
+                      <p className="font-mono text-xs sm:text-sm font-extrabold text-[#1f4a3f]">
+                        {(camp.downloads_count ?? 0).toLocaleString('en-IN')}
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[#52665e]">
                         Shares
                       </p>
-                      <p className="font-mono text-sm font-extrabold text-[#17362f]">
-                        {camp.shares_count ?? 0}
+                      <p className="font-mono text-xs sm:text-sm font-extrabold text-[#b87333]">
+                        {(camp.shares_count ?? 0).toLocaleString('en-IN')}
                       </p>
                     </div>
                   </div>

@@ -50,11 +50,9 @@ export default function UserScreen3Result({
   };
 
   // 1. Download Action
-  const handleDownload = async () => {
-    setDownloading(true);
+  const triggerBrowserDownload = () => {
+    if (!frameUrl) return;
     try {
-      logEvent('download');
-
       const campSlug = sanitizeFilename(campaign.name || 'Campaign');
       const userSlug = sanitizeFilename(userName || 'Supporter');
       const filename = `YogBoardFrame-${campSlug}-${userSlug}.png`;
@@ -67,6 +65,17 @@ export default function UserScreen3Result({
       document.body.removeChild(link);
     } catch (err) {
       console.error('Download failed:', err);
+    }
+  };
+
+  // 1. Direct Download
+  const handleDownload = async () => {
+    if (!frameUrl) return;
+    setDownloading(true);
+    logEvent('download');
+
+    try {
+      triggerBrowserDownload();
     } finally {
       setDownloading(false);
     }
@@ -108,11 +117,11 @@ export default function UserScreen3Result({
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          handleDownload();
+          triggerBrowserDownload();
         }
       }
     } else {
-      handleDownload();
+      triggerBrowserDownload();
     }
   };
 
@@ -135,7 +144,7 @@ export default function UserScreen3Result({
   // 5. Instagram Share Workflow
   const handleInstagram = () => {
     logEvent('instagram');
-    handleDownload();
+    triggerBrowserDownload();
     alert('Your YogBoardFrame image has been downloaded! Open Instagram to share it to your Story or Feed.');
   };
 

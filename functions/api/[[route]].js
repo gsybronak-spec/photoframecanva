@@ -137,69 +137,22 @@ app.get('/admin/me', requireAdminAuth, (c) => {
 // -------------------------------------------------------------
 app.get('/admin/metrics', requireAdminAuth, async (c) => {
   try {
+    c.header('Cache-Control', 'no-store, no-cache, must-revalidate');
     const supabase = getSupabase(c);
 
-    // 1. Campaign counts by status
-    const { data: campaigns, error: campErr } = await supabase
-      .from('yogframe_campaigns')
-      .select('id, status');
+    // Call database-level aggregate stored functions (Zero 1,000 row limits, 100% accurate)
+    const [{ data: overall, error: overallErr }, { data: campaignMetrics, error: campErr }] =
+      await Promise.all([
+        supabase.rpc('get_admin_overall_metrics'),
+        supabase.rpc('get_admin_campaign_analytics'),
+      ]);
 
+    if (overallErr) throw overallErr;
     if (campErr) throw campErr;
 
-    const activeCount = campaigns.filter((camp) => camp.status === 'Active').length;
-    const draftCount = campaigns.filter((camp) => camp.status === 'Draft').length;
-    const pausedCount = campaigns.filter((camp) => camp.status === 'Paused').length;
-    const archivedCount = campaigns.filter((camp) => camp.status === 'Archived').length;
-
-    // 2. Total frames generated (anonymous count)
-    const { count: framesCount, error: frameErr } = await supabase
-      .from('yogframe_share_events')
-      .select('*', { count: 'exact', head: true })
-      .eq('event_type', 'generate');
-
-    if (frameErr) throw frameErr;
-
-    // 3. Share events breakdown (non-generate events)
-    const { data: shareEvents, error: shareErr } = await supabase
-      .from('yogframe_share_events')
-      .select('event_type')
-      .neq('event_type', 'generate');
-
-    if (shareErr) throw shareErr;
-
-    const totalShares = shareEvents ? shareEvents.length : 0;
-    const platformShares = {
-      whatsapp: 0,
-      facebook: 0,
-      instagram: 0,
-      link: 0,
-      download: 0,
-    };
-
-    if (shareEvents) {
-      shareEvents.forEach((evt) => {
-        const type = (evt.event_type || '').toLowerCase();
-        if (platformShares[type] !== undefined) {
-          platformShares[type]++;
-        } else {
-          platformShares.link++;
-        }
-      });
-    }
-
     return c.json({
-      activeCampaigns: activeCount,
-      draftCampaigns: draftCount,
-      pausedCampaigns: pausedCount,
-      archivedCampaigns: archivedCount,
-      totalCampaigns: campaigns.length,
-      totalFrames: framesCount || 0,
-      totalShares,
-      downloads: platformShares.download,
-      whatsappShares: platformShares.whatsapp,
-      facebookShares: platformShares.facebook,
-      instagramShares: platformShares.instagram,
-      linkShares: platformShares.link,
+      ...overall,
+      campaigns: campaignMetrics || [],
     });
   } catch (err) {
     console.error('Error fetching admin metrics:', err);
@@ -275,37 +228,36 @@ app.get('/admin/campaigns', requireAdminAuth, async (c) => {
 
     const campaignList = campaigns || [];
     const campaignIds = campaignList.map((camp) => camp.id);
-    let framesMap = {};
-    let sharesMap = {};
+    let campMetricsMap = {};
 
     if (campaignIds.length > 0) {
-      const { data: eventsData } = await supabase
-        .from('yogframe_share_events')
-        .select('campaign_id, event_type')
-        .in('campaign_id', campaignIds);
-
-      if (eventsData) {
-        eventsData.forEach((evt) => {
-          if (evt.event_type === 'generate') {
-            framesMap[evt.campaign_id] = (framesMap[evt.campaign_id] || 0) + 1;
-          } else {
-            sharesMap[evt.campaign_id] = (sharesMap[evt.campaign_id] || 0) + 1;
-          }
+      const { data: cMetrics } = await supabase.rpc('get_admin_campaign_analytics');
+      if (cMetrics) {
+        cMetrics.forEach((cm) => {
+          campMetricsMap[cm.id] = cm;
         });
       }
     }
 
-    const enrichedCampaigns = campaignList.map((camp) => ({
-      ...camp,
-      photo_config: Array.isArray(camp.photo_config)
-        ? camp.photo_config[0] || null
-        : camp.photo_config,
-      name_config: Array.isArray(camp.name_config)
-        ? camp.name_config[0] || null
-        : camp.name_config,
-      frames_count: framesMap[camp.id] || 0,
-      shares_count: sharesMap[camp.id] || 0,
-    }));
+    const enrichedCampaigns = campaignList.map((camp) => {
+      const cm = campMetricsMap[camp.id] || {};
+      return {
+        ...camp,
+        photo_config: Array.isArray(camp.photo_config)
+          ? camp.photo_config[0] || null
+          : camp.photo_config,
+        name_config: Array.isArray(camp.name_config)
+          ? camp.name_config[0] || null
+          : camp.name_config,
+        frames_count: Number(cm.generated_count || 0),
+        downloads_count: Number(cm.downloads_count || 0),
+        shares_count: Number(cm.shares_count || 0),
+        whatsapp_count: Number(cm.whatsapp_count || 0),
+        facebook_count: Number(cm.facebook_count || 0),
+        instagram_count: Number(cm.instagram_count || 0),
+        link_count: Number(cm.link_count || 0),
+      };
+    });
 
     const total = count != null ? count : enrichedCampaigns.length;
     const totalPages = Math.ceil(total / limit) || 1;
