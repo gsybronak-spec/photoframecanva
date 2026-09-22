@@ -323,7 +323,7 @@ export default function AnalyticsSection({ metrics = {} }) {
           </div>
 
           {/* Downloads */}
-          <div className="rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-3 text-center">
+          <div className="col-span-2 sm:col-span-1 rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-3 text-center">
             <div className="mx-auto grid h-7 w-7 place-items-center rounded-lg bg-[#e6f0fa] text-[#2563eb]">
               <DownloadCloud className="h-4 w-4" />
             </div>
@@ -434,8 +434,8 @@ export default function AnalyticsSection({ metrics = {} }) {
           </div>
         </div>
 
-        {/* Campaign Table */}
-        <div className="mt-3 overflow-x-auto rounded-xl border border-[#e8dfcf]">
+        {/* Campaign Table (Desktop View >= md) */}
+        <div className="hidden md:block mt-3 overflow-x-auto rounded-xl border border-[#e8dfcf]">
           <table className="min-w-full divide-y divide-[#e8dfcf] text-left text-xs">
             <thead className="bg-[#faf6ed] font-semibold text-[#17362f]">
               <tr>
@@ -662,6 +662,207 @@ export default function AnalyticsSection({ metrics = {} }) {
               </tr>
             </tfoot>
           </table>
+        </div>
+
+        {/* Campaign Stacked Cards (Mobile View < md) */}
+        <div className="block md:hidden mt-3 space-y-3">
+          {paginatedCampaigns.length === 0 ? (
+            <div className="rounded-xl border-2 border-dashed border-[#e8dfcf] bg-white p-6 text-center text-xs text-gray-500">
+              No campaigns found matching the specified filters.
+            </div>
+          ) : (
+            paginatedCampaigns.map((camp) => (
+              <div
+                key={camp.id}
+                className="rounded-2xl border border-[#e8dfcf] bg-white p-3.5 sm:p-4 shadow-sm space-y-3"
+              >
+                {/* Campaign Header: Name, District & Status */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-sm text-[#17362f] truncate" title={camp.name}>
+                      {camp.name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-xs text-[#52665e] font-medium">
+                        {camp.district || 'All Gujarat'}
+                      </span>
+                      <a
+                        href={`/campaign/${camp.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 font-mono text-[10px] text-[#79987e] hover:text-[#1f4a3f]"
+                      >
+                        <span>/{camp.slug}</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0 ${getStatusBadge(
+                      camp.status
+                    )}`}
+                  >
+                    {camp.status || 'Active'}
+                  </span>
+                </div>
+
+                {/* Primary 3-Metric Block */}
+                <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-[#faf6ed] p-2.5 text-center border border-[#e8dfcf]">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#52665e]">
+                      Generated
+                    </p>
+                    <p className="font-mono text-sm font-extrabold text-[#17362f] mt-0.5">
+                      {Number(camp.generated_count || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb]">
+                      Downloads
+                    </p>
+                    <p className="font-mono text-sm font-extrabold text-[#2563eb] mt-0.5">
+                      {Number(camp.downloads_count || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#be6c45]">
+                      Shares
+                    </p>
+                    <p className="font-mono text-sm font-extrabold text-[#be6c45] mt-0.5">
+                      {Number(camp.shares_count || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Platform Shares 4-Box Grid */}
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  <div className="flex items-center justify-between rounded-lg bg-[#faf6ed]/70 px-2.5 py-1.5 border border-[#e8dfcf]/60">
+                    <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                      <MessageCircle className="h-3 w-3 text-green-700" />
+                      <span>WhatsApp</span>
+                    </span>
+                    <span className="font-mono font-bold text-[#17362f]">
+                      {Number(camp.whatsapp_count || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-[#faf6ed]/70 px-2.5 py-1.5 border border-[#e8dfcf]/60">
+                    <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                      <Facebook className="h-3 w-3 text-blue-700" />
+                      <span>Facebook</span>
+                    </span>
+                    <span className="font-mono font-bold text-[#17362f]">
+                      {Number(camp.facebook_count || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-[#faf6ed]/70 px-2.5 py-1.5 border border-[#e8dfcf]/60">
+                    <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                      <Instagram className="h-3 w-3 text-pink-700" />
+                      <span>Instagram</span>
+                    </span>
+                    <span className="font-mono font-bold text-[#17362f]">
+                      {Number(camp.instagram_count || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-[#faf6ed]/70 px-2.5 py-1.5 border border-[#e8dfcf]/60">
+                    <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                      <Share2 className="h-3 w-3 text-[#417264]" />
+                      <span>Link</span>
+                    </span>
+                    <span className="font-mono font-bold text-[#17362f]">
+                      {Number(camp.link_count || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Mobile Total Parity Summary Card */}
+          {filteredCampaigns.length > 0 && (
+            <div className="rounded-2xl border-2 border-[#db9b35]/40 bg-[#faf6ed] p-3.5 shadow-sm space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#17362f]">
+                  Total ({filteredCampaigns.length} Campaigns)
+                </h4>
+                <span className="text-[10px] font-bold text-[#79987e] uppercase">
+                  Parity Sum
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white p-2 text-center border border-[#e8dfcf]">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#52665e]">
+                    Generated
+                  </p>
+                  <p className="font-mono text-sm font-extrabold text-[#17362f] mt-0.5">
+                    {filteredTotals.generated.toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb]">
+                    Downloads
+                  </p>
+                  <p className="font-mono text-sm font-extrabold text-[#2563eb] mt-0.5">
+                    {filteredTotals.downloads.toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#be6c45]">
+                    Shares
+                  </p>
+                  <p className="font-mono text-sm font-extrabold text-[#be6c45] mt-0.5">
+                    {filteredTotals.shares.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1 border border-[#e8dfcf]/60">
+                  <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                    <MessageCircle className="h-3 w-3 text-green-700" />
+                    <span>WhatsApp</span>
+                  </span>
+                  <span className="font-mono font-bold text-green-800">
+                    {filteredTotals.whatsapp.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1 border border-[#e8dfcf]/60">
+                  <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                    <Facebook className="h-3 w-3 text-blue-700" />
+                    <span>Facebook</span>
+                  </span>
+                  <span className="font-mono font-bold text-blue-800">
+                    {filteredTotals.facebook.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1 border border-[#e8dfcf]/60">
+                  <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                    <Instagram className="h-3 w-3 text-pink-700" />
+                    <span>Instagram</span>
+                  </span>
+                  <span className="font-mono font-bold text-pink-800">
+                    {filteredTotals.instagram.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1 border border-[#e8dfcf]/60">
+                  <span className="text-[#52665e] flex items-center gap-1 font-medium text-[11px]">
+                    <Share2 className="h-3 w-3 text-[#417264]" />
+                    <span>Link</span>
+                  </span>
+                  <span className="font-mono font-bold text-[#1f4a3f]">
+                    {filteredTotals.link.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Table Pagination */}

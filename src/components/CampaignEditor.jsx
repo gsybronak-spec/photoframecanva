@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Save, RefreshCw, Link as LinkIcon, AlertCircle, CheckCircle, LayoutTemplate } from 'lucide-react';
 import CanvasStage from './CanvasStage';
-import EditorSidebar from './EditorSidebar';
+import EditorSidebar, { ArtworkSection, PhotoAreaSection, NameAreaSection } from './EditorSidebar';
 import { PRESET_CATEGORIES, SIZE_PRESETS, findMatchingPreset } from '../utils/sizePresets';
 import { GUJARAT_DISTRICTS } from '../utils/gujaratDistricts';
 
@@ -50,7 +50,7 @@ export default function CampaignEditor({
 
       <form id="campaign-form" onSubmit={handleSubmit} className="soft-card mt-5 rounded-[26px] bg-white p-4 sm:p-7 shadow-sm">
         {/* Campaign Info Fields */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Campaign Name */}
           <div className="sm:col-span-1">
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#52665e]" htmlFor="campaign-name">
@@ -60,7 +60,7 @@ export default function CampaignEditor({
               id="campaign-name"
               required
               placeholder="e.g. Ahmedabad Sunset Yogotsav"
-              className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-medium text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+              className="w-full min-h-[44px] rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-3.5 py-2.5 text-base sm:text-sm font-medium text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
               value={campaign.name || ''}
               onChange={(e) => onUpdateCampaignField('name', e.target.value)}
             />
@@ -76,7 +76,7 @@ export default function CampaignEditor({
                 id="campaign-slug"
                 required
                 placeholder="e.g. ahmedabad-sunset-yogotsav"
-                className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-mono text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+                className="w-full min-h-[44px] rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-3.5 py-2.5 text-base sm:text-sm font-mono text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
                 value={campaign.slug || ''}
                 onChange={(e) => onUpdateCampaignField('slug', e.target.value)}
               />
@@ -90,7 +90,7 @@ export default function CampaignEditor({
             </label>
             <select
               id="campaign-district"
-              className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-semibold text-[#17362f] focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+              className="w-full min-h-[44px] rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-3.5 py-2.5 text-base sm:text-sm font-semibold text-[#17362f] focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20 cursor-pointer"
               value={campaign.district || ''}
               onChange={(e) => onUpdateCampaignField('district', e.target.value)}
             >
@@ -110,7 +110,7 @@ export default function CampaignEditor({
             </label>
             <select
               id="campaign-status"
-              className="w-full rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm font-semibold text-[#17362f] focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+              className="w-full min-h-[44px] rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-3.5 py-2.5 text-base sm:text-sm font-semibold text-[#17362f] focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20 cursor-pointer"
               value={campaign.status || 'Draft'}
               onChange={(e) => onUpdateCampaignField('status', e.target.value)}
             >
@@ -123,7 +123,7 @@ export default function CampaignEditor({
         </div>
 
         {/* Campaign Description */}
-        <div className="mt-4">
+        <div className="mt-3.5 sm:mt-4">
           <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#52665e]" htmlFor="campaign-description">
             Campaign Description (Optional)
           </label>
@@ -131,14 +131,14 @@ export default function CampaignEditor({
             id="campaign-description"
             rows="2"
             placeholder="Provide context or instructions for this yoga event campaign..."
-            className="w-full resize-none rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-4 py-2.5 text-sm text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
+            className="w-full resize-none rounded-xl border border-[#e5dccd] bg-[#fdfbf6] px-3.5 py-2.5 text-base sm:text-sm text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20"
             value={campaign.description || ''}
             onChange={(e) => onUpdateCampaignField('description', e.target.value)}
           />
         </div>
 
         {/* PhotoFrame Size Presets Section */}
-        <div className="mt-5 rounded-2xl border border-[#e8dfcf] bg-[#faf6ed] p-4 sm:p-5">
+        <div className="mt-4 sm:mt-5 rounded-2xl border border-[#e8dfcf] bg-[#faf6ed] p-3.5 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-1.5">
@@ -148,17 +148,17 @@ export default function CampaignEditor({
                 </label>
               </div>
               <p className="mt-0.5 text-xs text-[#52665e]">
-                Choose target output aspect ratio. Canvas and generated exports will match this exact size.
+                Choose target output aspect ratio. Canvas and generated exports match this size.
               </p>
             </div>
 
-            {/* Small visual aspect ratio badge & preview */}
-            <div className="flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2 border border-[#e8dfcf] shadow-sm">
+            {/* Visual aspect ratio badge */}
+            <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 border border-[#e8dfcf] shadow-sm">
               <div
-                className="border-2 border-[#1f4a3f] bg-[#e9e1d1] rounded-sm transition-all"
+                className="border-2 border-[#1f4a3f] bg-[#e9e1d1] rounded-sm transition-all shrink-0"
                 style={{
-                  width: `${Math.min(28, Math.max(12, Math.round(22 * ((campaign.canvas_width || 1080) / (campaign.canvas_height || 1350)))))}px`,
-                  height: '22px',
+                  width: `${Math.min(26, Math.max(12, Math.round(20 * ((campaign.canvas_width || 1080) / (campaign.canvas_height || 1350)))))}px`,
+                  height: '20px',
                 }}
                 title={`Aspect ratio: ${campaign.canvas_width || 1080} × ${campaign.canvas_height || 1350}`}
               />
@@ -174,7 +174,7 @@ export default function CampaignEditor({
           </div>
 
           {/* Category Tabs: Instagram | Facebook | WhatsApp | Custom */}
-          <div className="mt-3.5 flex flex-wrap gap-1.5 border-b border-[#e8dfcf] pb-2.5">
+          <div className="mt-3 flex flex-wrap gap-1.5 border-b border-[#e8dfcf] pb-2.5">
             {PRESET_CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -189,7 +189,7 @@ export default function CampaignEditor({
                     }
                   }
                 }}
-                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+                className={`min-h-[38px] rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                   selectedCategory === cat
                     ? 'bg-[#1f4a3f] text-white shadow-sm'
                     : 'bg-white text-[#52665e] border border-[#e8dfcf] hover:bg-[#f6efe4]'
@@ -202,7 +202,7 @@ export default function CampaignEditor({
 
           {/* Presets Grid for Selected Category */}
           {selectedCategory !== 'Custom' ? (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
               {SIZE_PRESETS.filter((p) => p.category === selectedCategory).map((preset) => {
                 const isSelected =
                   (campaign.canvas_width || 1080) === preset.width &&
@@ -252,7 +252,7 @@ export default function CampaignEditor({
                   max="4000"
                   value={campaign.canvas_width || 1080}
                   onChange={(e) => onUpdateCampaignField('canvas_width', Math.max(100, parseInt(e.target.value) || 1080))}
-                  className="mt-1 w-full rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
+                  className="mt-1 w-full min-h-[44px] rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-base sm:text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
                 />
               </div>
               <div>
@@ -266,7 +266,7 @@ export default function CampaignEditor({
                   max="4000"
                   value={campaign.canvas_height || 1350}
                   onChange={(e) => onUpdateCampaignField('canvas_height', Math.max(100, parseInt(e.target.value) || 1350))}
-                  className="mt-1 w-full rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
+                  className="mt-1 w-full min-h-[44px] rounded-lg border border-[#e5dccd] bg-[#fdfbf6] px-3 py-2 text-base sm:text-xs font-mono font-bold text-[#17362f] focus:border-[#db9b35] focus:outline-none"
                 />
               </div>
             </div>
@@ -275,77 +275,157 @@ export default function CampaignEditor({
 
         {/* Public URL Indicator */}
         {publicUrl && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#faf6ed] px-3.5 py-2 text-xs border border-[#e8dfcf]">
-            <LinkIcon className="h-3.5 w-3.5 text-[#79987e]" />
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#faf6ed] px-3.5 py-2 text-xs border border-[#e8dfcf]">
+            <LinkIcon className="h-3.5 w-3.5 text-[#79987e] shrink-0" />
             <span className="font-medium text-[#52665e]">Public Endpoint:</span>
-            <code className="font-mono font-bold text-[#1f4a3f]">{publicUrl}</code>
-            <span className="ml-auto text-[10px] text-[#79987e] font-semibold">Strict Query Isolation</span>
+            <code className="font-mono font-bold text-[#1f4a3f] break-all">{publicUrl}</code>
+            <span className="ml-auto text-[10px] text-[#79987e] font-semibold hidden sm:inline">Strict Query Isolation</span>
           </div>
         )}
 
-        {/* Action Bar / Preview Toggle */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#e8dfcf] pt-4">
-          <div>
-            <p className="text-sm font-bold text-[#17362f]">Interactive Frame Canvas</p>
-            <p className="text-xs text-[#52665e]">
-              Directly drag, stretch, or rotate elements. Values save permanently to the database.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsPreviewMode(!isPreviewMode)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${
-              isPreviewMode
-                ? 'border-[#db9b35] bg-[#db9b35] text-[#17362f]'
-                : 'border-[#e8dfcf] bg-[#fdfbf6] text-[#17362f] hover:bg-[#f6efe4]'
-            }`}
-          >
-            {isPreviewMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            <span>{isPreviewMode ? 'Exit Preview' : 'Live Preview'}</span>
-          </button>
-        </div>
-
-        {/* 2-Column Editor Grid */}
-        <div className="editor-grid mt-4">
-          <CanvasStage
+        {/* ========================================================= */}
+        {/* MOBILE WORKFLOW (< lg)                                    */}
+        {/* Ordered: Details -> Artwork -> Photo Area -> Name Area -> */}
+        {/*          Preview -> Save                                  */}
+        {/* ========================================================= */}
+        <div className="block lg:hidden mt-6 space-y-4">
+          {/* 1. Artwork (Locked) */}
+          <ArtworkSection
             campaign={campaign}
-            photoConfig={photoConfig}
-            nameConfig={nameConfig}
-            activeLayer={activeLayer}
-            onSelectLayer={onSelectLayer}
-            onUpdateCampaignGeometry={onUpdateCampaignGeometry}
-            onUpdatePhotoGeometry={onUpdatePhotoGeometry}
-            onUpdateNameGeometry={onUpdateNameGeometry}
             onArtworkUpload={onArtworkUpload}
-            isPreviewMode={isPreviewMode}
             uploadingArtwork={uploadingArtwork}
+            isCollapsible={true}
+            defaultOpen={true}
           />
 
-          <EditorSidebar
-            campaign={campaign}
+          {/* 2. Photo Area */}
+          <PhotoAreaSection
             photoConfig={photoConfig}
-            nameConfig={nameConfig}
-            activeLayer={activeLayer}
-            onSelectLayer={onSelectLayer}
             onAddPhotoArea={onAddPhotoArea}
             onRemovePhotoArea={onRemovePhotoArea}
+            onUpdatePhotoGeometry={onUpdatePhotoGeometry}
+            isCollapsible={true}
+            defaultOpen={Boolean(photoConfig?.enabled)}
+          />
+
+          {/* 3. Name Area */}
+          <NameAreaSection
+            nameConfig={nameConfig}
             onAddNameArea={onAddNameArea}
             onRemoveNameArea={onRemoveNameArea}
-            onUpdateCampaignGeometry={onUpdateCampaignGeometry}
-            onUpdatePhotoGeometry={onUpdatePhotoGeometry}
             onUpdateNameGeometry={onUpdateNameGeometry}
-            onArtworkUpload={onArtworkUpload}
-            uploadingArtwork={uploadingArtwork}
+            isCollapsible={true}
+            defaultOpen={Boolean(nameConfig?.enabled)}
           />
+
+          {/* 4. Canvas Preview / Interactive Stage */}
+          <div className="rounded-2xl border border-[#e8dfcf] bg-[#faf6ed] p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#17362f]">
+                  Interactive Frame Preview
+                </p>
+                <p className="text-[11px] text-[#52665e]">
+                  Touch Photo Area or Name Area to position and stretch on canvas.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+                className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all shadow-sm ${
+                  isPreviewMode
+                    ? 'border-[#db9b35] bg-[#db9b35] text-[#17362f]'
+                    : 'border-[#e8dfcf] bg-white text-[#17362f] hover:bg-[#f6efe4]'
+                }`}
+              >
+                {isPreviewMode ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                <span>{isPreviewMode ? 'Exit Preview' : 'Live Preview'}</span>
+              </button>
+            </div>
+
+            <CanvasStage
+              campaign={campaign}
+              photoConfig={photoConfig}
+              nameConfig={nameConfig}
+              activeLayer={activeLayer}
+              onSelectLayer={onSelectLayer}
+              onUpdateCampaignGeometry={onUpdateCampaignGeometry}
+              onUpdatePhotoGeometry={onUpdatePhotoGeometry}
+              onUpdateNameGeometry={onUpdateNameGeometry}
+              onArtworkUpload={onArtworkUpload}
+              isPreviewMode={isPreviewMode}
+              uploadingArtwork={uploadingArtwork}
+            />
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* DESKTOP WORKFLOW (>= lg)                                  */}
+        {/* Standard 2-column Studio Layout                           */}
+        {/* ========================================================= */}
+        <div className="hidden lg:block mt-6">
+          <div className="flex items-center justify-between gap-3 border-b border-[#e8dfcf] pb-4 mb-4">
+            <div>
+              <p className="text-sm font-bold text-[#17362f]">Interactive Frame Studio</p>
+              <p className="text-xs text-[#52665e]">
+                Directly position Photo Area and Name Area. Base artwork frame is fixed.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsPreviewMode(!isPreviewMode)}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${
+                isPreviewMode
+                  ? 'border-[#db9b35] bg-[#db9b35] text-[#17362f]'
+                  : 'border-[#e8dfcf] bg-[#fdfbf6] text-[#17362f] hover:bg-[#f6efe4]'
+              }`}
+            >
+              {isPreviewMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <span>{isPreviewMode ? 'Exit Preview' : 'Live Preview'}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] gap-5 items-start">
+            <CanvasStage
+              campaign={campaign}
+              photoConfig={photoConfig}
+              nameConfig={nameConfig}
+              activeLayer={activeLayer}
+              onSelectLayer={onSelectLayer}
+              onUpdateCampaignGeometry={onUpdateCampaignGeometry}
+              onUpdatePhotoGeometry={onUpdatePhotoGeometry}
+              onUpdateNameGeometry={onUpdateNameGeometry}
+              onArtworkUpload={onArtworkUpload}
+              isPreviewMode={isPreviewMode}
+              uploadingArtwork={uploadingArtwork}
+            />
+
+            <EditorSidebar
+              campaign={campaign}
+              photoConfig={photoConfig}
+              nameConfig={nameConfig}
+              activeLayer={activeLayer}
+              onSelectLayer={onSelectLayer}
+              onAddPhotoArea={onAddPhotoArea}
+              onRemovePhotoArea={onRemovePhotoArea}
+              onAddNameArea={onAddNameArea}
+              onRemoveNameArea={onRemoveNameArea}
+              onUpdatePhotoGeometry={onUpdatePhotoGeometry}
+              onUpdateNameGeometry={onUpdateNameGeometry}
+              onArtworkUpload={onArtworkUpload}
+              uploadingArtwork={uploadingArtwork}
+            />
+          </div>
         </div>
 
         {/* Save Campaign Button & Feedback */}
-        <div className="mt-7">
+        <div className="mt-6 sm:mt-7">
           <button
             type="submit"
             disabled={saving || !campaign.campaign_image_url}
-            className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 px-6 text-sm font-extrabold text-white shadow-lg transition-all active:scale-[0.99] ${
+            className={`flex min-h-[48px] sm:min-h-[52px] w-full items-center justify-center gap-2 rounded-xl py-3.5 sm:py-4 px-6 text-sm sm:text-base font-extrabold text-white shadow-lg transition-all active:scale-[0.99] ${
               !campaign.campaign_image_url
                 ? 'bg-gray-400 cursor-not-allowed opacity-80'
                 : 'bg-[#1f4a3f] hover:bg-[#163b32]'
@@ -377,9 +457,9 @@ export default function CampaignEditor({
               }`}
             >
               {saveMessage.type === 'error' ? (
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 shrink-0" />
               ) : (
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4 shrink-0" />
               )}
               <span>{saveMessage.text}</span>
             </div>

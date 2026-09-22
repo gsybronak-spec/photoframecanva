@@ -510,8 +510,8 @@ export default function App() {
         campaign_height: initH,
         campaign_rotation: 0,
       }));
-      setActiveLayer('campaign');
-      showToast('Artwork uploaded to storage as base layer with exact cover fit.');
+      setActiveLayer(photoConfig.enabled ? 'photo' : 'name');
+      showToast('Artwork uploaded and locked as base frame.');
     } catch (err) {
       showToast(`Upload failed: ${err.message}`);
     } finally {

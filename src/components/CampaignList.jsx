@@ -126,26 +126,26 @@ export default function CampaignList({
       {/* Search & Filters Toolbar */}
       <div className="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search campaigns by name, slug, or district..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full rounded-xl border border-[#e5dccd] bg-white py-2.5 pl-10 pr-4 text-xs sm:text-sm text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20 shadow-sm"
+            className="w-full min-h-[44px] rounded-xl border border-[#e5dccd] bg-white py-2.5 pl-10 pr-4 text-base sm:text-sm text-[#17362f] placeholder-gray-400 focus:border-[#db9b35] focus:outline-none focus:ring-2 focus:ring-[#db9b35]/20 shadow-sm"
           />
         </div>
 
         {/* District & Status Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
           {/* District Dropdown Filter */}
-          <div className="flex items-center gap-1.5 rounded-xl border border-[#e8dfcf] bg-white px-3 py-1.5 shadow-sm">
-            <MapPin className="h-3.5 w-3.5 text-[#db9b35]" />
+          <div className="flex items-center gap-1.5 rounded-xl border border-[#e8dfcf] bg-white px-3 py-2 shadow-sm min-h-[44px]">
+            <MapPin className="h-3.5 w-3.5 text-[#db9b35] shrink-0" />
             <select
               value={districtFilter}
               onChange={(e) => handleDistrictChange(e.target.value)}
-              className="bg-transparent text-xs font-bold text-[#17362f] focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-bold text-[#17362f] focus:outline-none cursor-pointer w-full"
             >
               <option value="All">All Gujarat Districts</option>
               {GUJARAT_DISTRICTS.map((d) => (
@@ -157,12 +157,12 @@ export default function CampaignList({
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-1 shadow-sm">
+          <div className="flex items-center gap-1 rounded-xl border border-[#e8dfcf] bg-[#faf6ed] p-1 shadow-sm overflow-x-auto no-scrollbar">
             {['All', 'Active', 'Draft', 'Paused', 'Archived'].map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusChange(status)}
-                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
                   statusFilter === status
                     ? 'bg-[#1f4a3f] text-white shadow-sm'
                     : 'text-[#52665e] hover:text-[#17362f]'
@@ -292,13 +292,13 @@ export default function CampaignList({
                 </div>
 
                 {/* Card Actions Footer */}
-                <div className="mt-4 border-t border-[#e8dfcf] pt-3 flex flex-wrap items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1">
+                <div className="mt-4 border-t border-[#e8dfcf] pt-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <button
                       type="button"
                       onClick={() => onSelectCampaign(camp.id)}
                       title="Edit in Studio"
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#e5dccd] bg-white px-2.5 py-1.5 text-xs font-bold text-[#17362f] hover:bg-[#f6efe4] transition-colors"
+                      className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-[#e5dccd] bg-white px-3 py-2 text-xs font-bold text-[#17362f] hover:bg-[#f6efe4] transition-colors active:scale-95 shadow-sm"
                     >
                       <Edit3 className="h-3.5 w-3.5 text-[#1f4a3f]" />
                       <span>Edit</span>
@@ -308,7 +308,7 @@ export default function CampaignList({
                       type="button"
                       onClick={() => onPreviewCampaign(camp)}
                       title="Preview Composition"
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#e5dccd] bg-white px-2.5 py-1.5 text-xs font-bold text-[#17362f] hover:bg-[#f6efe4] transition-colors"
+                      className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-[#e5dccd] bg-white px-3 py-2 text-xs font-bold text-[#17362f] hover:bg-[#f6efe4] transition-colors active:scale-95 shadow-sm"
                     >
                       <Eye className="h-3.5 w-3.5 text-[#79987e]" />
                       <span>Preview</span>
@@ -318,26 +318,26 @@ export default function CampaignList({
                       type="button"
                       onClick={() => handleCopyLink(camp)}
                       title="Copy Public Link"
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-[#e5dccd] bg-white text-[#17362f] hover:bg-[#f6efe4] transition-colors"
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-[#e5dccd] bg-white text-[#17362f] hover:bg-[#f6efe4] transition-colors active:scale-95 shadow-sm"
                     >
                       {copiedId === camp.id ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        <Check className="h-4 w-4 text-green-600" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5 text-gray-600" />
+                        <Copy className="h-4 w-4 text-gray-600" />
                       )}
                     </button>
                   </div>
 
                   {/* Status Toggle Quick Buttons */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {camp.status !== 'Active' && (
                       <button
                         type="button"
                         onClick={() => onStatusChange(camp.id, 'Active')}
                         title="Activate Campaign"
-                        className="grid h-8 w-8 place-items-center rounded-lg border border-[#c4dcce] bg-[#eaf2ed] text-[#1f4a3f] hover:bg-[#d6eade] transition-colors"
+                        className="grid h-10 w-10 place-items-center rounded-xl border border-[#c4dcce] bg-[#eaf2ed] text-[#1f4a3f] hover:bg-[#d6eade] transition-colors active:scale-95"
                       >
-                        <Play className="h-3.5 w-3.5 fill-current" />
+                        <Play className="h-4 w-4 fill-current" />
                       </button>
                     )}
 
@@ -346,9 +346,9 @@ export default function CampaignList({
                         type="button"
                         onClick={() => onStatusChange(camp.id, 'Paused')}
                         title="Pause Campaign"
-                        className="grid h-8 w-8 place-items-center rounded-lg border border-[#e5e7eb] bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        className="grid h-10 w-10 place-items-center rounded-xl border border-[#e5e7eb] bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors active:scale-95"
                       >
-                        <Pause className="h-3.5 w-3.5" />
+                        <Pause className="h-4 w-4" />
                       </button>
                     )}
 
@@ -357,9 +357,9 @@ export default function CampaignList({
                         type="button"
                         onClick={() => onStatusChange(camp.id, 'Archived')}
                         title="Archive Campaign"
-                        className="grid h-8 w-8 place-items-center rounded-lg border border-[#f2cfc2] bg-[#faece5] text-[#be6c45] hover:bg-[#f5ddd4] transition-colors"
+                        className="grid h-10 w-10 place-items-center rounded-lg border border-[#f2cfc2] bg-[#faece5] text-[#be6c45] hover:bg-[#f5ddd4] transition-colors active:scale-95"
                       >
-                        <Archive className="h-3.5 w-3.5" />
+                        <Archive className="h-4 w-4" />
                       </button>
                     )}
 
@@ -371,9 +371,9 @@ export default function CampaignList({
                         }
                       }}
                       title="Delete Campaign"
-                      className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-[#fca5a5]/60 bg-[#fee2e2]/50 text-[#b91c1c] hover:bg-[#fee2e2] transition-colors active:scale-95"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

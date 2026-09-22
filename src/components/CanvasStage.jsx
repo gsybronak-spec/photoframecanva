@@ -52,6 +52,8 @@ export default function CanvasStage({
   // Direct Pointer Interaction (Drag & Free 8-point Stretch/Resize)
   const handlePointerDown = (e, layerId, handle = 'move') => {
     if (isPreviewMode) return;
+    // Campaign Artwork is permanently locked as base frame - no dragging or resizing
+    if (layerId === 'campaign') return;
     e.stopPropagation();
     e.preventDefault();
 
@@ -134,14 +136,9 @@ export default function CanvasStage({
       }
     }
 
-    if (layerId === 'campaign') {
-      onUpdateCampaignGeometry({
-        campaign_x: newGeo.x,
-        campaign_y: newGeo.y,
-        campaign_width: newGeo.w,
-        campaign_height: newGeo.h,
-      });
-    } else if (layerId === 'photo') {
+    if (layerId === 'campaign') return; // Artwork is permanently locked
+
+    if (layerId === 'photo') {
       onUpdatePhotoGeometry({
         x: newGeo.x,
         y: newGeo.y,
@@ -210,25 +207,24 @@ export default function CanvasStage({
         }}
         onClick={(e) => {
           if (e.target === stageRef.current) {
-            onSelectLayer('campaign');
+            onSelectLayer(null);
           }
         }}
       >
-        {/* LAYER 1: Campaign Artwork Base Layer */}
+        {/* LAYER 1: Campaign Artwork Base Layer (Permanently Locked Base Frame) */}
         <div
           id="campaign-layer"
           data-layer="campaign"
-          className={`editable-layer ${
-            activeLayer === 'campaign' && !isPreviewMode ? 'selected' : ''
-          }`}
+          className={`editable-layer ${hasArtwork ? 'artwork-locked' : ''}`}
           style={{
             left: `${campGeo.x}%`,
             top: `${campGeo.y}%`,
             width: `${campGeo.w}%`,
             height: `${campGeo.h}%`,
             transform: `rotate(${campGeo.rot}deg)`,
+            pointerEvents: hasArtwork ? 'none' : 'auto',
+            cursor: hasArtwork ? 'default' : 'pointer',
           }}
-          onPointerDown={(e) => handlePointerDown(e, 'campaign', 'move')}
         >
           {hasArtwork ? (
             <img
@@ -256,7 +252,7 @@ export default function CanvasStage({
               </p>
               <button
                 type="button"
-                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-[#1f4a3f] hover:bg-[#16382f] text-white px-4 py-2 text-xs font-bold shadow-md transition-all active:scale-95"
+                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-[#1f4a3f] hover:bg-[#16382f] text-white px-4 py-2.5 text-xs font-bold shadow-md transition-all active:scale-95 min-h-[44px]"
               >
                 {uploadingArtwork ? (
                   <>
@@ -270,20 +266,6 @@ export default function CanvasStage({
                   </>
                 )}
               </button>
-            </div>
-          )}
-
-          {/* 8 Resize Handles for Artwork (when selected, not in preview mode, and artwork is present) */}
-          {!isPreviewMode && activeLayer === 'campaign' && hasArtwork && (
-            <div className="selection-tools" aria-hidden="true">
-              {HANDLES.map((handle) => (
-                <span
-                  key={handle}
-                  className="resize-handle"
-                  data-handle={handle}
-                  onPointerDown={(e) => handlePointerDown(e, 'campaign', handle)}
-                />
-              ))}
             </div>
           )}
         </div>
@@ -413,28 +395,11 @@ export default function CanvasStage({
       />
 
       {/* Quick Helper Note & Toolbar */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#52665e] px-1">
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#52665e] px-1">
         <span className="flex items-center gap-1.5 bg-[#f9eedf] px-3 py-1.5 rounded-lg border border-[#e8dfcf]">
           <Sparkles className="h-3.5 w-3.5 text-[#db9b35]" />
-          <span>Direct manipulation: click layer to select, drag to move, drag 8 handles to stretch/resize freely.</span>
+          <span>Tap or drag Photo Area or Name Area to position and resize. Campaign artwork frame is fixed.</span>
         </span>
-
-        <button
-          type="button"
-          onClick={() => {
-            onUpdateCampaignGeometry({
-              campaign_x: 0,
-              campaign_y: 0,
-              campaign_width: 100,
-              campaign_height: 100,
-              campaign_rotation: 0,
-            });
-          }}
-          title="Reset artwork to full stage"
-          className="text-[11px] font-bold text-[#1f4a3f] hover:underline"
-        >
-          Fit Artwork (100%)
-        </button>
       </div>
     </div>
   );
